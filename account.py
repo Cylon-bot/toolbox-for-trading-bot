@@ -66,7 +66,7 @@ class Account:
 class AccountSingleton:
     '''
         needed for async functions who uses the class account in order 
-        to not have 2 functions accesing the class at the same time
+        to not have 2 functions accessing the class at the same time
     '''
     def __init__(self):
         self.account = None
