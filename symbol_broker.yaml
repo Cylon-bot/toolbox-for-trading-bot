@@ -1,0 +1,25 @@
+calcul_for_lot: 
+    - EURUSD
+    - GBPUSD
+    - EURAUD
+    - EURGBP
+    - EURAUD
+    - EURCAD
+    - EURJPY
+    - EURNZD
+    - EURCHF
+    - AUDUSD
+    - USDCAD
+    - USDJPY
+    - NZDUSD
+    - USDCHF
+
+symbol_for_US_index:
+    - DJI30
+    - SP500
+    - NQ100
+
+symbol_for_US_index:
+    - DAX30
+    - CAC40
+
