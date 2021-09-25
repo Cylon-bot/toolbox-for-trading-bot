@@ -205,6 +205,8 @@ class Trade:
                 SL_IN_MICRO_PIPS,
                 last_row_lot_all_pair,
                 my_account,
+                LIST_INDEX_EU,
+                LIST_INDEX_US
             )
         else:
             volume = calc_position_size_forex(
