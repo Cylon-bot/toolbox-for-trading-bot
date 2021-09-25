@@ -19,13 +19,13 @@ def get_data(
     backtest_data: Optional[pd.DataFrame] = None,
     bollinger_band: bool = False,
 ) -> Dict[str, pd.DataFrame]:
-    '''
-        ask to the mt5 server for the data and add any specified indicator from talib librarie
-        indicator implemented at the moment :
+    """
+    ask to the mt5 server for the data and add any specified indicator from talib librarie
+    indicator implemented at the moment :
 
-            - EMA
-            - bollinger band
-    '''
+        - EMA
+        - bollinger band
+    """
     pair_data = dict()
     if not backtest:
         for pair in pairs:
@@ -50,18 +50,18 @@ def get_data(
                 pair_data = add_EMA_to_data(pair_data, backtest=backtest, EMA=EMA)
             else:
                 pair_data = add_EMA_to_data(pair_data, backtest=backtest, EMA=EMA)
-    if bollinger_band : 
+    if bollinger_band:
         if backtest:
             pair_data = add_bollinger_to_data(pair_data, backtest=backtest)
         else:
-            pair_data = add_bollinger_to_data(pair_data, backtest=backtest)  
+            pair_data = add_bollinger_to_data(pair_data, backtest=backtest)
     return pair_data
 
 
 def get_time_frame_needed(TF: int = mt5.TIMEFRAME_M1) -> Dict[int, datetime]:
-    ''' 
-        return three day of candles in a specifie TF
-    '''
+    """
+    return three day of candles in a specifie TF
+    """
     now = datetime.now().astimezone(pytz.timezone("Etc/GMT-5"))
     now = datetime(now.year, now.month, now.day, hour=now.hour, minute=now.minute)
     three_day = now - timedelta(hours=72)
@@ -77,11 +77,11 @@ def return_datas(
     backtest: bool = False,
     backtest_data: Optional[pd.DataFrame] = None,
     bollinger_band: bool = False,
-) -> Union[Dict[int,Dict[str, pd.DataFrame]], Dict[str,pd.DataFrame]]:
-    ''' 
-        return datas candles with specifie information. If we need to return 
-        information for size lot it will only be the last candle.
-    '''
+) -> Union[Dict[int, Dict[str, pd.DataFrame]], Dict[str, pd.DataFrame]]:
+    """
+    return datas candles with specifie information. If we need to return
+    information for size lot it will only be the last candle.
+    """
     data_candles_all_tf = dict()
     date_to = datetime.now().astimezone(pytz.timezone("Etc/GMT-5"))
     for TF in TF_list:
@@ -109,10 +109,12 @@ def return_datas(
         return data_candles_all_tf
 
 
-def add_EMA_to_data(data_candles_all_tf: dict, backtest: bool = False, EMA: int = 50) -> Dict[str, pd.DataFrame]:
-    '''
-        add specified EMA to data candles
-    '''
+def add_EMA_to_data(
+    data_candles_all_tf: dict, backtest: bool = False, EMA: int = 50
+) -> Dict[str, pd.DataFrame]:
+    """
+    add specified EMA to data candles
+    """
     STRING_EMA = str(EMA)
     if backtest:
         data_candles_all_tf["EMA" + STRING_EMA] = ta.EMA(
@@ -124,34 +126,51 @@ def add_EMA_to_data(data_candles_all_tf: dict, backtest: bool = False, EMA: int 
             pair_data["EMA" + STRING_EMA] = ta.EMA(pair_data["close"], EMA)
     return data_candles_all_tf
 
+
 def add_bollinger_to_data(data_candles_all_tf: dict, backtest: bool = False):
-    '''
-        add specified bollinger band to data candles
-    '''
+    """
+    add specified bollinger band to data candles
+    """
     if backtest:
-        data_candles_all_tf["uper_bollinger"], data_candles_all_tf["middle_bollinger"], data_candles_all_tf["lower_bollinger"] = ta.BBANDS(
-            data_candles_all_tf["close"], timeperiod = 20, matype=0,nbdevup=2,nbdevdn=2,
+        (
+            data_candles_all_tf["uper_bollinger"],
+            data_candles_all_tf["middle_bollinger"],
+            data_candles_all_tf["lower_bollinger"],
+        ) = ta.BBANDS(
+            data_candles_all_tf["close"],
+            timeperiod=20,
+            matype=0,
+            nbdevup=2,
+            nbdevdn=2,
         )
 
     else:
         for pair, pair_data in data_candles_all_tf.items():
-            pair_data["uper_bollinger"], pair_data["middle_bollinger"], pair_data["lower_bollinger"]= ta.BBANDS(
-            pair_data["close"], timeperiod = 20, matype=0,nbdevup=2,nbdevdn=2,
-        )
+            (
+                pair_data["uper_bollinger"],
+                pair_data["middle_bollinger"],
+                pair_data["lower_bollinger"],
+            ) = ta.BBANDS(
+                pair_data["close"],
+                timeperiod=20,
+                matype=0,
+                nbdevup=2,
+                nbdevdn=2,
+            )
     return data_candles_all_tf
 
 
 def save_data(DATA: Dict[str, pd.DataFrame], PATH_OUTPUT: Path):
-    '''
-        Export pandas data to a file with pickle.
-    '''
+    """
+    Export pandas data to a file with pickle.
+    """
     with open(PATH_OUTPUT, "wb") as file:
         pck.dump(DATA, file)
 
 
 def load_data(path_output: Path):
-    '''
-        Read input data from a text file with pickle and export them as pandas data.
-    '''
+    """
+    Read input data from a text file with pickle and export them as pandas data.
+    """
     with open(path_output, "rb") as FILE:
         return pck.load(FILE)

@@ -4,37 +4,39 @@ from pathlib import Path
 
 
 class Account:
-    '''
-        needed for connecting with the mt5 account
-    '''
+    """
+    needed for connecting with the mt5 account
+    """
+
     def __init__(
         self,
         account_currency: str = "USD",
         original_risk: float = 1,
         normal_account: bool = False,
-    ):  
-        
+    ):
+
         self.get_account_info()
         self.trade_on_going = {}
         self.trade_pending = {}
         self.account_currency = account_currency
         self.original_risk = original_risk
         self.normal_account = normal_account
+
     def connect(self, credential: str = "demo_account.yaml"):
-        '''
-            input --> yaml file path from project root with credential in it
-            exemple of a valid input file :
-            ##########
-            Name     : Slim Shady
-            Type     : Forex Hedged USD
-            Server   : MetaQuotes-Demo 
-            Login    : 4242424242
-            Password : IamAVeryHardPasswordToCrack
-            Investor : Null
-            ##########
-            In fact this function only need login, password, server and name
-            but this is the file format given by mt5 when you create a demo account
-        '''
+        """
+        input --> yaml file path from project root with credential in it
+        exemple of a valid input file :
+        ##########
+        Name     : Slim Shady
+        Type     : Forex Hedged USD
+        Server   : MetaQuotes-Demo
+        Login    : 4242424242
+        Password : IamAVeryHardPasswordToCrack
+        Investor : Null
+        ##########
+        In fact this function only need login, password, server and name
+        but this is the file format given by mt5 when you create a demo account
+        """
         ABSOLUTE_PATH_LAUNCH = Path.cwd()
         DEMO_ACCOUNT_CREDENTIAL_PATH = ABSOLUTE_PATH_LAUNCH / credential
         with open(DEMO_ACCOUNT_CREDENTIAL_PATH) as credential_file:
@@ -64,10 +66,11 @@ class Account:
 
 
 class AccountSingleton:
-    '''
-        needed for async functions who uses the class account in order 
-        to not have 2 functions accessing the class at the same time
-    '''
+    """
+    needed for async functions who uses the class account in order
+    to not have 2 functions accessing the class at the same time
+    """
+
     def __init__(self):
         self.account = None
 

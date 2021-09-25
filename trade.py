@@ -11,10 +11,12 @@ from termcolor import colored
 from pathlib import Path
 import yaml
 
+
 class Trade:
-    '''
-        class use to manage all different type of market order on your mt5 account
-    '''
+    """
+    class use to manage all different type of market order on your mt5 account
+    """
+
     def __init__(
         self,
         symbol: str,
@@ -24,7 +26,7 @@ class Trade:
         sl: float = None,
         magic_number: int = 42000,
         comment: str = "trade from robot",
-    ) :
+    ):
         self.symbol = symbol
         self.order_type = order_type
         self.price = price
@@ -76,27 +78,27 @@ class Trade:
         last_row_lot_all_pair: Optional[dict] = None,
         size: Optional[float] = None,
         close_previous_pending_order: Optional[bool] = False,
-    ) -> (bool, Optional['MqlTradeResult']):
-        '''
-            use to open a market order on the given symbol
-            this market order can be : 
-                - direct sell
-                - direct buy
-                - buy limit
-                - sell limit
-                - buy stop
-                - sell stop
-        '''
+    ) -> (bool, Optional["MqlTradeResult"]):
+        """
+        use to open a market order on the given symbol
+        this market order can be :
+            - direct sell
+            - direct buy
+            - buy limit
+            - sell limit
+            - buy stop
+            - sell stop
+        """
 
         SYMBOL_INFO = mt5.symbol_info(self.symbol)
         SYMBOL_IS_REAL = self.check_symbol(SYMBOL_INFO, self.symbol)
         if not SYMBOL_IS_REAL:
             return False, None
 
-        if self.action == mt5.TRADE_ACTION_PENDING and self.price is None :
+        if self.action == mt5.TRADE_ACTION_PENDING and self.price is None:
             print("You need to give a price for a pending order")
-            return None 
-        if self.action == mt5.TRADE_ACTION_DEAL : 
+            return None
+        if self.action == mt5.TRADE_ACTION_DEAL:
             self.finding_actual_price()
             self.request_open["deviation"] = 20
 
@@ -110,12 +112,11 @@ class Trade:
         self.result_open_request = mt5.order_send(self.request_open)
         iterator = 0
         while (
-            (self.result_open_request.comment == "Requote"
+            self.result_open_request.comment == "Requote"
             or (self.result_open_request.comment == "Invalid price")
             or (self.result_open_request.comment == "No prices")
-            or (self.result_open_request.comment == "Invalid volume"))
-            and iterator < 50
-        ):
+            or (self.result_open_request.comment == "Invalid volume")
+        ) and iterator < 50:
             self.finding_actual_price()
 
             if size is None:
@@ -153,9 +154,9 @@ class Trade:
             return True, self.result_open_request
 
     def finding_actual_price(self):
-        '''
-            in case of a direct order, we need to find the actual price which is the purpose of this function
-        '''
+        """
+        in case of a direct order, we need to find the actual price which is the purpose of this function
+        """
         if self.order_type == mt5.ORDER_TYPE_BUY:
             self.price = mt5.symbol_info_tick(self.symbol).ask
             self.request_open["price"] = self.price
@@ -163,11 +164,18 @@ class Trade:
             self.price = mt5.symbol_info_tick(self.symbol).bid
             self.request_open["price"] = self.price
 
-    def finding_size(self, account_currency: str, risk: float, last_row_lot_all_pair, my_account: Account, path_symbol_broker: str = "symbol_broker.yaml") -> float:
-        '''
-            in case of the size not specified by the user, we need to find the lot size of the order 
-            thanks to the stop loss and the risk which is the purpose of this function
-        '''
+    def finding_size(
+        self,
+        account_currency: str,
+        risk: float,
+        last_row_lot_all_pair,
+        my_account: Account,
+        path_symbol_broker: str = "symbol_broker.yaml",
+    ) -> float:
+        """
+        in case of the size not specified by the user, we need to find the lot size of the order
+        thanks to the stop loss and the risk which is the purpose of this function
+        """
 
         ABSOLUTE_PATH_LAUNCH = Path.cwd()
         SYMBOL_BROKER_PATH = ABSOLUTE_PATH_LAUNCH / path_symbol_broker
@@ -177,9 +185,9 @@ class Trade:
         LIST_INDEX_EU = symbol_broker_yaml["symbol_for_EU_index"]
         LIST_INDEX_US = symbol_broker_yaml["symbol_for_US_index"]
 
-        if self.symbol in LIST_INDEX_EU or self.symbol in LIST_INDEX_US :
-            CURRENCY_2 = None 
-        else : 
+        if self.symbol in LIST_INDEX_EU or self.symbol in LIST_INDEX_US:
+            CURRENCY_2 = None
+        else:
             CURRENCY_2 = self.symbol[3:6]
         if size is None:
             DIFFERENCE_SL_PRICE = abs(self.sl - self.price)
@@ -189,14 +197,14 @@ class Trade:
         else:
             SL_IN_MICRO_PIPS = DIFFERENCE_SL_PRICE * 100000
 
-        if self.symbol in LIST_INDEX_EU or self.symbol in LIST_INDEX_US :
+        if self.symbol in LIST_INDEX_EU or self.symbol in LIST_INDEX_US:
             volume = calc_position_size_index(
                 self.symbol,
                 account_currency,
                 risk,
                 SL_IN_MICRO_PIPS,
                 last_row_lot_all_pair,
-                my_account
+                my_account,
             )
         else:
             volume = calc_position_size_forex(
@@ -205,14 +213,14 @@ class Trade:
                 risk,
                 SL_IN_MICRO_PIPS,
                 last_row_lot_all_pair,
-                my_account
+                my_account,
             )
         return volume
 
     def check_symbol(self, symbol_info: mt5.SymbolInfo, symbol: str):
-        '''
-            check if the symbol given by the user exist in the broker trading list
-        '''
+        """
+        check if the symbol given by the user exist in the broker trading list
+        """
         if symbol_info is None:
             print(symbol, "not found")
             return False
@@ -225,13 +233,13 @@ class Trade:
         return True
 
     def check_moving_trade(self, my_account: Account):
-        '''
-            check if the pending trades has been proc and if on going trades has been closed 
-            and specifie it the my_account object inside the attribute : 
-                - my_account.trade_on_going
-                - my_account.trade_pending
-            -
-        '''
+        """
+        check if the pending trades has been proc and if on going trades has been closed
+        and specifie it the my_account object inside the attribute :
+            - my_account.trade_on_going
+            - my_account.trade_pending
+        -
+        """
         history_trade = get_order_history()
         all_trade_on_going = positions_get()
 
@@ -258,9 +266,9 @@ class Trade:
                 my_account.trade_on_going[self.ticket_order] = self
 
     def close_position(self, my_account: Account) -> bool:
-        '''
-            close a position either pending or in going
-        '''
+        """
+        close a position either pending or in going
+        """
         self.check_moving_trade(my_account)
         if self.ticket_order in my_account.trade_pending:
 
@@ -272,10 +280,18 @@ class Trade:
             }
         elif self.ticket_order in my_account.trade_on_going:
 
-            if self.order_type == mt5.ORDER_TYPE_BUY or ORDER_TYPE_BUY_STOP or ORDER_TYPE_BUY_LIMIT:
+            if (
+                self.order_type == mt5.ORDER_TYPE_BUY
+                or ORDER_TYPE_BUY_STOP
+                or ORDER_TYPE_BUY_LIMIT
+            ):
                 order_type_close = mt5.ORDER_TYPE_SELL
                 price_close = mt5.symbol_info_tick(self.symbol).bid
-            elif self.order_type == mt5.ORDER_TYPE_SELL or ORDER_TYPE_SELL_STOP or ORDER_TYPE_SELL_LIMIT:
+            elif (
+                self.order_type == mt5.ORDER_TYPE_SELL
+                or ORDER_TYPE_SELL_STOP
+                or ORDER_TYPE_SELL_LIMIT
+            ):
                 order_type_close = mt5.ORDER_TYPE_BUY
                 price_close = mt5.symbol_info_tick(self.symbol).ask
             close_request = {
@@ -301,10 +317,18 @@ class Trade:
             result_close_request.comment == "Requote"
             and self.request_open["action"] == mt5.TRADE_ACTION_DEAL
         ):
-            if self.order_type == mt5.ORDER_TYPE_BUY or ORDER_TYPE_BUY_STOP or ORDER_TYPE_BUY_LIMIT:
+            if (
+                self.order_type == mt5.ORDER_TYPE_BUY
+                or ORDER_TYPE_BUY_STOP
+                or ORDER_TYPE_BUY_LIMIT
+            ):
                 price_close = mt5.symbol_info_tick(self.symbol).bid
                 close_request["price"] = price_close
-            elif self.order_type == mt5.ORDER_TYPE_SELL or ORDER_TYPE_SELL_STOP or ORDER_TYPE_SELL_LIMIT:
+            elif (
+                self.order_type == mt5.ORDER_TYPE_SELL
+                or ORDER_TYPE_SELL_STOP
+                or ORDER_TYPE_SELL_LIMIT
+            ):
                 price_close = mt5.symbol_info_tick(self.symbol).ask
                 close_request["price"] = price_close
             result_close_request = mt5.order_send(close_request)
