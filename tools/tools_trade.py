@@ -11,6 +11,7 @@ from account import Account
 ##### THIS FILE NEED REFACTORING #####
 ######################################
 
+
 def calc_position_size_index(
     symbol: str,
     account_currency: str,
@@ -18,13 +19,13 @@ def calc_position_size_index(
     sl: int,
     last_row_lot_all_pair: dict,
     account: Account,
-    list_index_eu : List[str] = [],
-    list_index_us : List[str] = [],
-    list_index_gb : List[str] = []
+    list_index_eu: List[str] = [],
+    list_index_us: List[str] = [],
+    list_index_gb: List[str] = [],
 ) -> float:
-    '''
-        calculte lot size for index order
-    '''
+    """
+    calculte lot size for index order
+    """
     ACCOUNT = mt5.account_info()
     BALANCE = ACCOUNT.balance
     SL_PIPS = sl / 100000
@@ -101,9 +102,9 @@ def calc_position_size_forex(
     last_row_lot_all_pair: dict,
     account: Account,
 ) -> float:
-    '''
-        calculte lot size for forex and crypto order
-    '''
+    """
+    calculte lot size for forex and crypto order
+    """
     ACCOUNT = mt5.account_info()
     BALANCE = ACCOUNT.balance
     CURRENCY_1 = symbol[0:3]
@@ -205,9 +206,9 @@ def get_order_history(
     date_from: datetime = datetime.now() - timedelta(hours=24),
     date_to: datetime = datetime.now() + timedelta(hours=5),
 ):
-    '''
-        get history of trades from the connected account
-    '''
+    """
+    get history of trades from the connected account
+    """
     res = mt5.history_deals_get(date_from, date_to)
     if res is not None and res != ():
         df = pd.DataFrame(list(res), columns=res[0]._asdict().keys())
@@ -218,9 +219,9 @@ def get_order_history(
 
 
 def calc_daily_lost_trades():
-    '''
-        calculate the daily lost trades
-    '''
+    """
+    calculate the daily lost trades
+    """
     now = datetime.now().astimezone(pytz.timezone("Etc/GMT-3"))
     now = datetime(now.year, now.month, now.day, hour=now.hour, minute=now.minute)
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -238,9 +239,9 @@ def calc_daily_lost_trades():
 
 
 def get_daily_trade_data() -> "history_order":
-    '''
-        calculate the daily lost trades
-    '''
+    """
+    calculate the daily lost trades
+    """
     now = datetime.now().astimezone(pytz.timezone("Etc/GMT-3"))
     now = datetime(now.year, now.month, now.day, hour=now.hour, minute=now.minute)
     yesterday = now - timedelta(hours=24)
@@ -251,9 +252,9 @@ def get_daily_trade_data() -> "history_order":
 def check_max_drawdown(
     initial_balance: float, current_balance: float, max_drawdown: float
 ) -> bool:
-    '''
-        check if the loss exceed the max given drawdown
-    '''
+    """
+    check if the loss exceed the max given drawdown
+    """
     PERCENTAGE = 0.01
     MAX_DRAWDOWN_PERCENTAGE = max_drawdown * PERCENTAGE
     is_in_drawdown = False
@@ -264,9 +265,9 @@ def check_max_drawdown(
 
 
 def positions_get(symbol=None) -> pd.DataFrame:
-    '''
-        return all on going positions
-    '''
+    """
+    return all on going positions
+    """
     if symbol is None:
         res = mt5.positions_get()
     else:
@@ -280,27 +281,27 @@ def positions_get(symbol=None) -> pd.DataFrame:
 
 
 def closing_all_pending_order(my_account: Account):
-    '''
-        close all pending order
-    '''
+    """
+    close all pending order
+    """
     pending_trade_dict = deepcopy(my_account.trade_pending)
     for ticket_order, trade_pending in pending_trade_dict.items():
         trade_pending.close_position(my_account)
 
 
 def closing_all_on_going_order(my_account: Account):
-    '''
-        close all on going order
-    '''
+    """
+    close all on going order
+    """
     on_going_trade_dict = deepcopy(my_account.trade_on_going)
     for ticket_order, trade_on_going in on_going_trade_dict.items():
         trade_on_going.close_position(my_account)
 
 
 def check_symbol(pair: str):
-    '''
-        check if the symbol given by the user exist in the broker trading list
-    '''
+    """
+    check if the symbol given by the user exist in the broker trading list
+    """
     symbol_info = mt5.symbol_info(pair)
     if symbol_info is None:
         return False
@@ -309,4 +310,3 @@ def check_symbol(pair: str):
         if not mt5.symbol_select(pair, True):
             return False
     return True
-
