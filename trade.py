@@ -76,7 +76,7 @@ class Trade:
         last_row_lot_all_pair: Optional[dict] = None,
         size: Optional[float] = None,
         close_previous_pending_order: Optional[bool] = False,
-    ) -> Union[bool, Optional['MqlTradeResult']]:
+    ) -> (bool, Optional['MqlTradeResult']):
         '''
             use to open a market order on the given symbol
             this market order can be : 
