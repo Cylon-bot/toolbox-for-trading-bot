@@ -19,7 +19,7 @@ symbol_for_US_index:
     - SP500
     - NQ100
 
-symbol_for_US_index:
+symbol_for_EU_index:
     - DAX30
     - CAC40
 
