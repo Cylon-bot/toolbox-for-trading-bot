@@ -1,0 +1,14 @@
+click
+DateTime
+MetaTrader5
+numpy
+pandas
+pathlib
+progressbar
+pytz
+pyyaml
+schedule
+typing
+slack
+pickle-mixin
+ta-lib
