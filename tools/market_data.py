@@ -74,7 +74,6 @@ def return_datas(
     TF_list: list[int],
     datas_for_lot: bool,
     EMA_list: Optional[List[int]] = None,
-    backtest: bool = False,
     backtest_data: Optional[pd.DataFrame] = None,
     bollinger_band: bool = False,
 ) -> Union[Dict[int, Dict[str, pd.DataFrame]], Dict[str, pd.DataFrame]]:
@@ -82,6 +81,10 @@ def return_datas(
     return datas candles with specifie information. If we need to return
     information for size lot it will only be the last candle.
     """
+    if backtest_data is not None :
+        backtest = True
+    else :
+        backtest = False
     data_candles_all_tf = dict()
     date_to = datetime.now().astimezone(pytz.timezone("Etc/GMT-5"))
     for TF in TF_list:
