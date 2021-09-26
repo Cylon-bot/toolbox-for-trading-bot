@@ -12,7 +12,6 @@ from trade import Trade
 import time
 
 
-
 def bot_strategy(
     my_account: Optional[Account],
     pair: str = "EURUSD-Z",
@@ -22,10 +21,10 @@ def bot_strategy(
     backtest_data: Optional[dict[str, pd.DataFrame]] = None,
     EMA_list: Optional[List[int]] = None,
     bollinger_band: bool = False,
-) -> Optional[dict[str,Union[bool, str, floatn int]]]:
-    '''
-        put your strat here 
-    '''
+) -> Optional[dict[str, Union[bool, str, float, int]]]:
+    """
+    put your strat here
+    """
     DATA = return_datas([pair], TF_list, False, EMA_list, backtest_data, bollinger_band)
     if backtest_data is None:
         LOT_ALL_PAIR = return_datas([pair], [mt5.TIMEFRAME_M1], True)
@@ -37,13 +36,11 @@ def bot_strategy(
     PIPS = 0.0001
     MICRO_PIPS = 0.00001
 
-
     LAST_CANDLE_FIRST_TF = Candle(DATA[TF_list[0]].iloc[-1])
-    
 
-    #if you want your bot to trade only between 9H and 17H (8 and 16 on mt5)
+    # if you want your bot to trade only between 9H and 17H (8 and 16 on mt5)
     last_candle_hour = LAST_CANDLE_FIRST_TF.date.hour
-    if (last_candle_hour < 9 or last_candle_hour > 17) :
+    if last_candle_hour < 9 or last_candle_hour > 17:
         return None
 
     #####################
@@ -54,12 +51,12 @@ def bot_strategy(
     tp = None
     sl = None
     size = None
-    comment = 'my bot trade'
+    comment = "my bot trade"
     ####################
     ### Taking trade ###
     ####################
 
-    if backtest_data is None :
+    if backtest_data is None:
         new_trade_is_open, result = take_trade(
             my_account,
             pair,
@@ -106,10 +103,10 @@ def take_trade(
     size: Optional[float],
     comment: str,
     lot_all_pair: pd.DataFrame,
-) -> [bool, "MqlTradeRequest"]:
-   '''
-        create a new trade and open it
-   '''
+) -> (bool, "MqlTradeRequest"):
+    """
+    create a new trade and open it
+    """
     new_trade = Trade(
         pair,
         order_type,
@@ -120,16 +117,22 @@ def take_trade(
         comment=comment,
     )
     new_trade_is_open, result = new_trade.open_position(
-        my_account, account_currency, risk, lot_all_pair, size = size
+        my_account, account_currency, risk, lot_all_pair, size=size
     )
     return new_trade_is_open, result
 
 
-def live_trading(account_currency: str, risk: float, pair_list: List[str], normal_account):
-    '''
-        launch the bot every minute  
-    '''
-    my_account = Account(account_currency=account_currency, original_risk=risk, normal_account = normal_account)
+def live_trading(
+    account_currency: str, risk: float, pair_list: List[str], normal_account
+):
+    """
+    launch the bot every minute
+    """
+    my_account = Account(
+        account_currency=account_currency,
+        original_risk=risk,
+        normal_account=normal_account,
+    )
     my_account.connect(credential="your_credential.yaml")
     for pair in pair_list:
         schedule_object = (
