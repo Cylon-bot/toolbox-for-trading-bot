@@ -1,7 +1,7 @@
 import click
 from termcolor import colored
 from backtest.backtest import launch_backtest
-from strat_bot import live_trading
+from bot_strat import live_trading
 from typing import List
 
 
