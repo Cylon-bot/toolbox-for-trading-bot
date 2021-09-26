@@ -1,10 +1,12 @@
 import pandas as pd
 from typing import List, Optional
 
+
 class Candle:
-    '''
-        class with all the inportant information about the candles you use for your strat
-    '''
+    """
+    class with all the inportant information about the candles you use for your strat
+    """
+
     def __init__(
         self,
         candle_info: pd.DataFrame,
@@ -46,9 +48,9 @@ class Candle:
         self.engulfing = "Unknown"
 
     def check_bullish_or_bearish(self) -> bool:
-        '''
-            check if the candle is bullish or bearish
-        '''
+        """
+        check if the candle is bullish or bearish
+        """
         if self.close - self.open >= 0:
             return True
         else:
@@ -57,9 +59,9 @@ class Candle:
     def add_EMA_info(
         self, candle_info: pd.DataFrame, EMA_list: Optional[List[int]]
     ) -> dict[str, int]:
-        '''
-            add the info of the EMA to the candle
-        '''
+        """
+        add the info of the EMA to the candle
+        """
         EMAs = dict()
         if EMA_list is None:
             return None
@@ -68,9 +70,9 @@ class Candle:
         return EMAs
 
     def check_engulfing(self, previous_candle: "Candle") -> bool:
-        '''
-            check if the candle is an engulfing candle 
-        '''
+        """
+        check if the candle is an engulfing candle
+        """
         if self.bullish and not previous_candle.bullish:
             if self.close > previous_candle.high:
                 self.engulfing = True
@@ -84,11 +86,10 @@ class Candle:
         else:
             self.engulfing = False
 
-
     def check_doji(self, body_min) -> Optional[bool]:
-        '''
-            check if the candle is a doji, need a body min parameter 
-        '''
+        """
+        check if the candle is a doji, need a body min parameter
+        """
         if (
             self.high_rejection == "Unknown"
             or self.low_rejection == "Unknown"
@@ -101,9 +102,9 @@ class Candle:
             return False
 
     def is_rejection_wicks(self, minimum_rejection: float) -> (bool, bool):
-        '''
-            check if the wicks are rejection wicks, need minimum rejection parameter
-        '''
+        """
+        check if the wicks are rejection wicks, need minimum rejection parameter
+        """
         if self.bullish:
             if (
                 self.high - self.close > minimum_rejection
@@ -142,9 +143,9 @@ class Candle:
                 return False, False
 
     def print_details(self, print_message: bool = False):
-        '''
-            print all the details of the candle for the user --> need refactoring (use __str__ instead)
-        '''
+        """
+        print all the details of the candle for the user --> need refactoring (use __str__ instead)
+        """
         PIPS = 0.0001
         PIPS_INVERSE = 1 / PIPS
         message = (

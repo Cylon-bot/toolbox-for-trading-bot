@@ -81,9 +81,9 @@ def return_datas(
     return datas candles with specifie information. If we need to return
     information for size lot it will only be the last candle.
     """
-    if backtest_data is not None :
+    if backtest_data is not None:
         backtest = True
-    else :
+    else:
         backtest = False
     data_candles_all_tf = dict()
     date_to = datetime.now().astimezone(pytz.timezone("Etc/GMT-5"))

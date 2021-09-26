@@ -11,27 +11,32 @@ from typing import List
     help="action to execute (str) : [backtest, launch_bot]",
 )
 @click.option(
-    "--account_currency", default="USD", help="account currency used (str), examples : [USD, EUR]"
+    "--account_currency",
+    default="USD",
+    help="account currency used (str), examples : [USD, EUR]",
+)
+@click.option("--risk", default=0.5, type=float, help="risk used(float) : ")
+@click.option(
+    "--pair_list",
+    multiple=True,
+    default=["EURUSD-Z"],
+    help="pair used(list) : [EURUSD, GBPUSD]",
 )
 @click.option(
-    "--risk", default=0.5, type=float, help="risk used(float) : "
-)
-@click.option(
-    "--pair_list", multiple=True, default=["EURUSD-Z"], help="pair used(list) : [EURUSD, GBPUSD]"
-)
-@click.option(
-    "--normal_account", default=True, help="normal account(bool), if you trade at admiral market, you need to specifie False"
+    "--normal_account",
+    default=True,
+    help="normal account(bool), if you trade at admiral market, you need to specifie False",
 )
 def main(
     action: str,
     account_currency: str,
     risk: float,
     pair_list: List[str],
-    normal_account: bool = True
+    normal_account: bool = True,
 ):
-    '''
-        launch the specified action 
-    '''
+    """
+    launch the specified action
+    """
     if action == "launch_bot":
         live_trading(account_currency, risk, pair_list, normal_account)
     elif action == "backtest":
