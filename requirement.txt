@@ -12,3 +12,4 @@ typing
 slack
 pickle-mixin
 ta-lib
+termcolor
