@@ -25,13 +25,13 @@ def bot_strategy(
     """
     put your strat here
     """
+
+    #Backtest only work with an unique TF for now. Works in progress
     DATA = return_datas([pair], TF_list, False, EMA_list, backtest_data, bollinger_band)
     if backtest_data is None:
         LOT_ALL_PAIR = return_datas([pair], [mt5.TIMEFRAME_M1], True)
     else:
         DATA_TF_1 = DATA[TF_list[0]]
-        DATA_TF_5 = DATA[TF_list[1]]
-        DATA_TF_15 = DATA[TF_list[2]]
 
     PIPS = 0.0001
     MICRO_PIPS = 0.00001
