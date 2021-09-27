@@ -4,7 +4,6 @@ MetaTrader5
 numpy
 pandas
 pathlib
-progressbar
 pytz
 pyyaml
 schedule
@@ -13,3 +12,4 @@ slack
 pickle-mixin
 ta-lib
 termcolor
+progress
