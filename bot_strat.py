@@ -1,6 +1,6 @@
 import MetaTrader5 as mt5
 from termcolor import colored
-from typing import List, Optional
+from typing import List, Optional, Union
 import pandas as pd
 from tools.market_data import return_datas
 from tools.tools_trade import positions_get
@@ -26,7 +26,7 @@ def bot_strategy(
     put your strat here
     """
 
-    #Backtest only work with an unique TF for now. Works in progress
+    # Backtest only work with an unique TF for now. Works in progress
     DATA = return_datas([pair], TF_list, False, EMA_list, backtest_data, bollinger_band)
     if backtest_data is None:
         LOT_ALL_PAIR = return_datas([pair], [mt5.TIMEFRAME_M1], True)

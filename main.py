@@ -1,6 +1,6 @@
 import click
 from termcolor import colored
-from backtest.backtest import launch_backtest
+from backtest.backtest import create_backtest
 from bot_strat import live_trading
 from typing import List
 
@@ -40,7 +40,7 @@ def main(
     if action == "launch_bot":
         live_trading(account_currency, risk, pair_list, normal_account)
     elif action == "backtest":
-        launch_backtest()
+        create_backtest()
     else:
         print(colored("No action with that name", "red"))
 

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import MetaTrader5 as mt5
 import pandas as pd
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 import os
 from pathlib import Path
 import pickle as pck
