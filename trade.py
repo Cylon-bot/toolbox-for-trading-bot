@@ -184,25 +184,12 @@ class Trade:
 
         LIST_INDEX_EU = symbol_broker_yaml["symbol_for_EU_index"]
         LIST_INDEX_US = symbol_broker_yaml["symbol_for_US_index"]
-
-        if self.symbol in LIST_INDEX_EU or self.symbol in LIST_INDEX_US:
-            CURRENCY_2 = None
-        else:
-            CURRENCY_2 = self.symbol[3:6]
-        if size is None:
-            DIFFERENCE_SL_PRICE = abs(self.sl - self.price)
-
-        if CURRENCY_2 == "JPY":
-            SL_IN_MICRO_PIPS = DIFFERENCE_SL_PRICE * 1000
-        else:
-            SL_IN_MICRO_PIPS = DIFFERENCE_SL_PRICE * 100000
-
         if self.symbol in LIST_INDEX_EU or self.symbol in LIST_INDEX_US:
             volume = calc_position_size_index(
                 self.symbol,
                 account_currency,
                 risk,
-                SL_IN_MICRO_PIPS,
+                DIFFERENCE_SL_PRICE,
                 last_row_lot_all_pair,
                 my_account,
                 LIST_INDEX_EU,
@@ -213,7 +200,7 @@ class Trade:
                 self.symbol,
                 account_currency,
                 risk,
-                SL_IN_MICRO_PIPS,
+                DIFFERENCE_SL_PRICE,
                 last_row_lot_all_pair,
                 my_account,
             )

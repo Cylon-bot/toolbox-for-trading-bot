@@ -94,111 +94,64 @@ def calc_position_size_index(
         return lot_size_index_gb
 
 
+def calc_lot_forex(risk: float, currency_2: str, sl: float, balance: float, price_conversion_symbol_to_account_currency: float) :
+    '''
+        calc lot size for forex 
+    '''
+    PERCENTAGE_CONVERTER = 0.01
+    RISK_PERCENTAGE = risk * PERCENTAGE_CONVERTER
+    if currency_2 == "JPY":
+        JPY_PIP_CONVERTER = 100
+        PIP_VALUE = (balance * RISK_PERCENTAGE) / (sl*JPY_PIP_CONVERTER)
+    else :
+        PIP_VALUE = (balance * RISK_PERCENTAGE) / sl
+    ONE_LOT_PRICE = 100_000
+    lot_calcul = (PIP_VALUE/ONE_LOT_PRICE)*(price_conversion_symbol_to_account_currency)
+    lot_size = round(lot_size, 2)
+    return lot_size
+
+def calc_account_currency_conversion(account_currency: str, symbol: str, current_price_symbols: Dict) :
+    '''
+        calculate the price conversion between the traded symbol and your account currency
+    '''
+    CURRENCY_2 = symbol[3:6]
+    OTHER_CHARACTER = symbol[6:]
+    if account_currency == CURRENCY_2:
+        account_currency_conversion = 1
+    else:
+        symbol_to_convert = account_currency + CURRENCY_2 + OTHER_CHARACTER
+        symbol_is_real = check_symbol(symbol_to_convert)
+        if symbol_is_real:
+            account_currency_conversion = float(
+                current_price_symbols[symbol_to_convert]["close"]
+            )
+        else:
+            symbol_to_convert = CURRENCY_2 + account_currency + OTHER_CHARACTER
+            symbol_is_real = check_symbol(symbol_to_convert)
+            if symbol_is_real:
+                account_currency_conversion = 1 / float(
+                    current_price_symbols[symbol_to_convert]["close"]
+                )
+            else:
+                print(f"unable to find a lot for {CURRENCY_2 + account_currency + OTHER_CHARACTER}")
+                return None
+    return account_currency_conversion
+    
 def calc_position_size_forex(
     symbol: str,
     account_currency: str,
     risk: float,
-    sl: int,
-    last_row_lot_all_pair: dict,
+    sl: float,
+    current_price_symbols: dict,
     account: Account,
-) -> float:
+) -> Optional[float]:
     """
-    calculte lot size for forex and crypto order
+        return lot size for forex
     """
     ACCOUNT = mt5.account_info()
     BALANCE = ACCOUNT.balance
-    CURRENCY_1 = symbol[0:3]
-    if (
-        CURRENCY_1 == "XAU"
-        or CURRENCY_1 == "BTC"
-        or CURRENCY_1 == "GOL"
-        or CURRENCY_1 == "CRU"
-        or CURRENCY_1 == "USO"
-        or CURRENCY_1 == "WTI"
-    ):
-        CURRENCY_2 = "USD"
-    else:
-        CURRENCY_2 = symbol[3:6]
-    if account_currency == CURRENCY_2:
-        close_candle_symbol_to_convert = 1
-    else:
-        if account.normal_account:
-            symbol_to_convert = account_currency + CURRENCY_2
-        else:
-            symbol_to_convert = account_currency + CURRENCY_2 + "-Z"
-
-        symbol_is_real = check_symbol(symbol_to_convert)
-        if symbol_is_real:
-            close_candle_symbol_to_convert = float(
-                last_row_lot_all_pair[symbol_to_convert]["close"]
-            )
-        else:
-            symbol_to_convert = CURRENCY_2 + account_currency
-            symbol_is_real = check_symbol(symbol_to_convert)
-            if symbol_is_real:
-                close_candle_symbol_to_convert = 1 / float(
-                    last_row_lot_all_pair[symbol_to_convert]["close"]
-                )
-            else:
-                print(f"unable to find a lot for {CURRENCY_2 + account_currency}")
-                return False
-
-    if CURRENCY_2 == "JPY":
-        JPY_CONVERTER_PIPS = 100
-        close_candle_symbol_to_convert = (
-            close_candle_symbol_to_convert / JPY_CONVERTER_PIPS
-        )
-    if (
-        CURRENCY_1 == "XAU"
-        or CURRENCY_1 == "BTC"
-        or CURRENCY_1 == "GOL"
-        or CURRENCY_1 == "CRU"
-        or CURRENCY_1 == "USO"
-        or CURRENCY_1 == "WTI"
-    ):
-        SL_PIPS = sl / 10000
-    else:
-        SL_PIPS = sl / 10
-    PERCENTAGE_CONVERTER = 0.01
-    RISK_PERCENTAGE = risk * PERCENTAGE_CONVERTER
-    PIP_VALUE = (BALANCE * RISK_PERCENTAGE) / SL_PIPS
-
-    if (
-        CURRENCY_1 == "XAU"
-        or CURRENCY_1 == "BTC"
-        or CURRENCY_1 == "GOL"
-        or CURRENCY_1 == "CRU"
-        or CURRENCY_1 == "USO"
-        or CURRENCY_1 == "WTI"
-    ):
-        PRICE_MINI_LOT_XAU = 10
-        CONVERSION_COTATION = PRICE_MINI_LOT_XAU / close_candle_symbol_to_convert
-        lot_size_xau_crypto = PIP_VALUE / CONVERSION_COTATION
-        if CURRENCY_1 == "CRU" or CURRENCY_1 == "WTI":
-            lot_size_xau_crypto = round(lot_size_xau_crypto, 1)
-        else:
-            lot_size_xau_crypto = round(lot_size_xau_crypto, 2)
-        return lot_size_xau_crypto
-    STANDARD_LOT = 1
-    PRICE_STANDART_LOT = 10
-    MINI_LOT = 0.1
-    PRICE_MINI_LOT = 1
-    MICRO_LOT = 0.01
-    PRICE_MICRO_LOT = 0.1
-    if PIP_VALUE < PRICE_MINI_LOT:
-        lot_size = (
-            PIP_VALUE / (PRICE_MICRO_LOT / close_candle_symbol_to_convert)
-        ) * MICRO_LOT
-    elif PIP_VALUE < PRICE_STANDART_LOT:
-        lot_size = (
-            PIP_VALUE / (PRICE_MINI_LOT / close_candle_symbol_to_convert)
-        ) * MINI_LOT
-    else:
-        lot_size = (
-            PIP_VALUE / (PRICE_STANDART_LOT / close_candle_symbol_to_convert)
-        ) * STANDARD_LOT
-    lot_size = round(lot_size, 2)
-
+    account_currency_conversion = calc_account_currency_conversion(account_currency, symbol, current_price_symbols)
+    lot_size = calc_lot_forex(risk, CURRENCY_2, sl, BALANCE, account_currency_conversion)
     return lot_size
 
 
