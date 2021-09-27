@@ -25,7 +25,7 @@ def recup_all_symbol_conversion(
 
 
 def bot_strategy(
-    my_account: Optional[Account],
+    my_account: Optional[Account] = None,
     pairs: List[str] = ["EURUSD-Z"],
     account_currency: str = "USD",
     risk: float = 0.5,

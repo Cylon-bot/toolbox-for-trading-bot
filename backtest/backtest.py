@@ -15,6 +15,42 @@ from termcolor import colored
 from bot_strat import bot_strategy
 
 
+def create_backtest():
+    """
+    create your backtest here, you have an example with the bot_strat already implemented
+    """
+    symbol = "EURUSD"
+    period_backtest = "january_2021"
+    risk = 0.5
+    path_data = "january_2021.txt"
+    initial_account_balance = 100_000
+    time_frame = mt5.TIMEFRAME_M1
+    more_than_on_trade_on_going = True
+    delete_previous_pending_trade = False
+    # here you need to create a dictionary with the name of the parameter in your strat function as key and input as value
+    # you don't have to put the parameters inside kwargs if they are already initialized and you don't want to change them
+    # exemple : I don't put the parameter my_account because I want the initalized value None
+    # don't put backtest_data parameter, it will be automatically fill by the backest class (PS : don't rename this parameter)
+    kwargs = {
+        "pairs": ["EURUSD"],
+        "risk": risk,
+        "TF_list": [time_frame],
+        "EMA_list": [50],
+    }
+    Backtest(
+        symbol,
+        period_backtest,
+        "bot_strat_example",
+        risk,
+        initial_account_balance,
+        time_frame,
+        more_than_on_trade_on_going,
+        delete_previous_pending_trade,
+        **kwargs,
+    )
+    Backtest.launch_backtest(path_data)
+
+
 class AccountBacktest:
     """
     regroup info of the backtest account
@@ -38,7 +74,7 @@ class Backtest:
         backtest_name: str,
         risk: float,
         initial_account_balance: float,
-        time_frames: int,
+        time_frame: int,
         more_than_on_trade_on_going: bool,
         delete_previous_pending_trade: bool,
         **kwargs,
@@ -59,7 +95,7 @@ class Backtest:
         self.trade_on_going = False
         self.kwargs = kwargs
 
-    def launch_backtest(self, path_data: str, month: str) -> (float, float):
+    def launch_backtest(self, path_data: str) -> (float, float):
         """
         launch backtest on the period of time and symbol specified
         Only work for a unique timeframe for now. Work in progress...
@@ -328,9 +364,10 @@ class Backtest:
         """
         DATA_TF = data_step_to_process[f"TF {self.time_frame}"]
         LAST_CANDLE = Candle(DATA_TF.iloc[-1])
+        self.kwargs["backtest_data"] = DATA_TF
         self.manage_on_going_trades(LAST_CANDLE)
         if not self.trade_on_going or self.more_than_on_trade_on_going:
-            trade = bot_strategy(**kwargs)
+            trade = bot_strategy(**self.kwargs)
         else:
             trade = None
         if trade is not None:
@@ -344,9 +381,3 @@ class Backtest:
             self.info_all_trade[
                 str(LAST_CANDLE.date) + str(trade["order_type"])
             ] = info_trade_deep_copy
-
-
-def create_backtest():
-    params_bot = inspect.signature(bot_strategy)
-    print(params_bot)
-    
