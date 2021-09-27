@@ -94,26 +94,37 @@ def calc_position_size_index(
         return lot_size_index_gb
 
 
-def calc_lot_forex(risk: float, currency_2: str, sl: float, balance: float, price_conversion_symbol_to_account_currency: float) :
-    '''
-        calc lot size for forex 
-    '''
+def calc_lot_forex(
+    risk: float,
+    currency_2: str,
+    sl: float,
+    balance: float,
+    price_conversion_symbol_to_account_currency: float,
+):
+    """
+    calc lot size for forex
+    """
     PERCENTAGE_CONVERTER = 0.01
     RISK_PERCENTAGE = risk * PERCENTAGE_CONVERTER
     if currency_2 == "JPY":
         JPY_PIP_CONVERTER = 100
-        PIP_VALUE = (balance * RISK_PERCENTAGE) / (sl*JPY_PIP_CONVERTER)
-    else :
+        PIP_VALUE = (balance * RISK_PERCENTAGE) / (sl * JPY_PIP_CONVERTER)
+    else:
         PIP_VALUE = (balance * RISK_PERCENTAGE) / sl
     ONE_LOT_PRICE = 100_000
-    lot_calcul = (PIP_VALUE/ONE_LOT_PRICE)*(price_conversion_symbol_to_account_currency)
+    lot_calcul = (PIP_VALUE / ONE_LOT_PRICE) * (
+        price_conversion_symbol_to_account_currency
+    )
     lot_size = round(lot_size, 2)
     return lot_size
 
-def calc_account_currency_conversion(account_currency: str, symbol: str, current_price_symbols: Dict) :
-    '''
-        calculate the price conversion between the traded symbol and your account currency
-    '''
+
+def calc_account_currency_conversion(
+    account_currency: str, symbol: str, current_price_symbols: Dict
+):
+    """
+    calculate the price conversion between the traded symbol and your account currency
+    """
     CURRENCY_2 = symbol[3:6]
     OTHER_CHARACTER = symbol[6:]
     if account_currency == CURRENCY_2:
@@ -133,10 +144,13 @@ def calc_account_currency_conversion(account_currency: str, symbol: str, current
                     current_price_symbols[symbol_to_convert]["close"]
                 )
             else:
-                print(f"unable to find a lot for {CURRENCY_2 + account_currency + OTHER_CHARACTER}")
+                print(
+                    f"unable to find a lot for {CURRENCY_2 + account_currency + OTHER_CHARACTER}"
+                )
                 return None
     return account_currency_conversion
-    
+
+
 def calc_position_size_forex(
     symbol: str,
     account_currency: str,
@@ -146,12 +160,16 @@ def calc_position_size_forex(
     account: Account,
 ) -> Optional[float]:
     """
-        return lot size for forex
+    return lot size for forex
     """
     ACCOUNT = mt5.account_info()
     BALANCE = ACCOUNT.balance
-    account_currency_conversion = calc_account_currency_conversion(account_currency, symbol, current_price_symbols)
-    lot_size = calc_lot_forex(risk, CURRENCY_2, sl, BALANCE, account_currency_conversion)
+    account_currency_conversion = calc_account_currency_conversion(
+        account_currency, symbol, current_price_symbols
+    )
+    lot_size = calc_lot_forex(
+        risk, CURRENCY_2, sl, BALANCE, account_currency_conversion
+    )
     return lot_size
 
 
