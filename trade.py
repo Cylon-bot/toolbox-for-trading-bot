@@ -75,7 +75,7 @@ class Trade:
         my_account: Account,
         account_currency: Optional[str] = None,
         risk: Optional[float] = None,
-        last_row_lot_all_pair: Optional[dict] = None,
+        account_currency_conversion: Optional[dict] = None,
         size: Optional[float] = None,
         close_previous_pending_order: Optional[bool] = False,
     ) -> (bool, Optional["MqlTradeResult"]):
@@ -104,7 +104,7 @@ class Trade:
 
         if size is None:
             self.request_open["volume"] = self.finding_size(
-                account_currency, risk, last_row_lot_all_pair, my_account
+                account_currency, risk, account_currency_conversion, my_account
             )
         else:
             self.request_open["volume"] = size
@@ -121,7 +121,7 @@ class Trade:
 
             if size is None:
                 self.request_open["volume"] = self.finding_size(
-                    account_currency, risk, last_row_lot_all_pair, my_account
+                    account_currency, risk, account_currency_conversion, my_account
                 )
             else:
                 self.request_open["volume"] = size
@@ -168,42 +168,23 @@ class Trade:
         self,
         account_currency: str,
         risk: float,
-        last_row_lot_all_pair,
+        account_currency_conversion,
         my_account: Account,
-        path_symbol_broker: str = "symbol_broker.yaml",
     ) -> float:
         """
         in case of the size not specified by the user, we need to find the lot size of the order
         thanks to the stop loss and the risk which is the purpose of this function
         """
 
-        ABSOLUTE_PATH_LAUNCH = Path.cwd()
-        SYMBOL_BROKER_PATH = ABSOLUTE_PATH_LAUNCH / path_symbol_broker
-        with open(SYMBOL_BROKER_PATH) as symbol_broker_file:
-            symbol_broker_yaml = yaml.load(symbol_broker_file, Loader=yaml.FullLoader)
-
-        LIST_INDEX_EU = symbol_broker_yaml["symbol_for_EU_index"]
-        LIST_INDEX_US = symbol_broker_yaml["symbol_for_US_index"]
-        if self.symbol in LIST_INDEX_EU or self.symbol in LIST_INDEX_US:
-            volume = calc_position_size_index(
-                self.symbol,
-                account_currency,
-                risk,
-                DIFFERENCE_SL_PRICE,
-                last_row_lot_all_pair,
-                my_account,
-                LIST_INDEX_EU,
-                LIST_INDEX_US,
-            )
-        else:
-            volume = calc_position_size_forex(
-                self.symbol,
-                account_currency,
-                risk,
-                DIFFERENCE_SL_PRICE,
-                last_row_lot_all_pair,
-                my_account,
-            )
+        DIFFERENCE_SL_PRICE = abs(self.sl - self.price)
+        volume = calc_position_size_forex(
+            self.symbol,
+            account_currency,
+            risk,
+            DIFFERENCE_SL_PRICE,
+            account_currency_conversion,
+            my_account,
+        )
         return volume
 
     def check_symbol(self, symbol_info: mt5.SymbolInfo, symbol: str):

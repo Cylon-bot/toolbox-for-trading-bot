@@ -10,11 +10,23 @@ from random import choice
 import schedule
 from trade import Trade
 import time
+import yaml
+from pathlib import Path
+
+
+def recup_all_symbol_conversion(
+    path_symbol_broker: str = "symbol_broker.yaml",
+) -> Dict[str, List[str]]:
+    ABSOLUTE_PATH_LAUNCH = Path.cwd()
+    SYMBOL_BROKER_PATH = ABSOLUTE_PATH_LAUNCH / path_symbol_broker
+    with open(SYMBOL_BROKER_PATH) as symbol_broker_file:
+        symbol_broker_yaml = yaml.load(symbol_broker_file, Loader=yaml.FullLoader)
+    return symbol_broker_yaml
 
 
 def bot_strategy(
     my_account: Optional[Account],
-    pair: str = "EURUSD-Z",
+    pairs: List[str] = ["EURUSD-Z"],
     account_currency: str = "USD",
     risk: float = 0.5,
     TF_list: list[int] = [mt5.TIMEFRAME_M1, mt5.TIMEFRAME_M15],
@@ -27,9 +39,13 @@ def bot_strategy(
     """
 
     # Backtest only work with an unique TF for now. Works in progress
-    DATA = return_datas([pair], TF_list, False, EMA_list, backtest_data, bollinger_band)
+
+    DATA = return_datas(pairs, TF_list, False, EMA_list, backtest_data, bollinger_band)
     if backtest_data is None:
-        LOT_ALL_PAIR = return_datas([pair], [mt5.TIMEFRAME_M1], True)
+        symbol_broker_yaml = recup_all_symbol_conversion()
+        account_currency_conversion = return_datas(
+            symbol_broker_yaml["calcul_for_lot"], [mt5.TIMEFRAME_M1], True
+        )
     else:
         DATA_TF_1 = DATA[TF_list[0]]
 
@@ -68,7 +84,7 @@ def bot_strategy(
             sl,
             size,
             comment,
-            LOT_ALL_PAIR,
+            account_currency_conversion,
         )
     else:
         info_trade = {

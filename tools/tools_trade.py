@@ -7,99 +7,13 @@ from typing import Dict, List
 from copy import deepcopy
 from account import Account
 
-######################################
-##### THIS FILE NEED REFACTORING #####
-######################################
-
-
-def calc_position_size_index(
-    symbol: str,
-    account_currency: str,
-    risk: float,
-    sl: int,
-    last_row_lot_all_pair: dict,
-    account: Account,
-    list_index_eu: List[str] = [],
-    list_index_us: List[str] = [],
-    list_index_gb: List[str] = [],
-) -> float:
-    """
-    calculte lot size for index order
-    """
-    ACCOUNT = mt5.account_info()
-    BALANCE = ACCOUNT.balance
-    SL_PIPS = sl / 100000
-    PERCENTAGE_CONVERTER = 0.01
-    RISK_PERCENTAGE = risk * PERCENTAGE_CONVERTER
-    PIP_VALUE = (BALANCE * RISK_PERCENTAGE) / SL_PIPS
-    PRICE_CFD = 1
-    if symbol in list_index_eu:
-        if account_currency != "EUR":
-            if account.normal_account:
-                SYMBOL_TO_CONVERT = "EURUSD"
-            else:
-                SYMBOL_TO_CONVERT = "EURUSD-Z"
-            close_candle_symbol_to_convert = 1 / float(
-                last_row_lot_all_pair[SYMBOL_TO_CONVERT]["close"]
-            )
-
-            CONVERSION_COTATION = PRICE_CFD / close_candle_symbol_to_convert
-        else:
-            CONVERSION_COTATION = 1
-
-        lot_size_index_eu = PIP_VALUE / CONVERSION_COTATION
-        lot_size_index_eu = round(lot_size_index_eu, 1)
-        return lot_size_index_eu
-    elif symbol in list_index_us:
-        if account_currency != "USD":
-            if account.normal_account:
-                SYMBOL_TO_CONVERT = "EURUSD"
-            else:
-                SYMBOL_TO_CONVERT = "EURUSD-Z"
-            close_candle_symbol_to_convert = float(
-                last_row_lot_all_pair[SYMBOL_TO_CONVERT]["close"]
-            )
-
-            CONVERSION_COTATION = PRICE_CFD / close_candle_symbol_to_convert
-        else:
-            CONVERSION_COTATION = 1
-        lot_size_index_us = PIP_VALUE / CONVERSION_COTATION
-        lot_size_index_us = round(lot_size_index_us, 1)
-        return lot_size_index_us
-    elif symbol in list_index_gb:
-        if account_currency != "GBP":
-            if account_currency == "USD":
-                if account.normal_account:
-                    SYMBOL_TO_CONVERT = "GBP" + account_currency
-                else:
-                    SYMBOL_TO_CONVERT = "GBP" + account_currency + "-Z"
-
-                close_candle_symbol_to_convert = 1 / float(
-                    last_row_lot_all_pair[SYMBOL_TO_CONVERT]["close"]
-                )
-            else:
-                if account_currency == "USD":
-                    SYMBOL_TO_CONVERT = account_currency + "GBP"
-                else:
-                    SYMBOL_TO_CONVERT = account_currency + "GBP" + "-Z"
-                close_candle_symbol_to_convert = float(
-                    last_row_lot_all_pair[SYMBOL_TO_CONVERT]["close"]
-                )
-
-            CONVERSION_COTATION = PRICE_CFD / close_candle_symbol_to_convert
-        else:
-            CONVERSION_COTATION = 1
-        lot_size_index_gb = PIP_VALUE / CONVERSION_COTATION
-        lot_size_index_gb = round(lot_size_index_gb, 1)
-        return lot_size_index_gb
-
 
 def calc_lot_forex(
     risk: float,
     currency_2: str,
     sl: float,
     balance: float,
-    price_conversion_symbol_to_account_currency: float,
+    account_currency_conversion: float,
 ):
     """
     calc lot size for forex
@@ -112,9 +26,7 @@ def calc_lot_forex(
     else:
         PIP_VALUE = (balance * RISK_PERCENTAGE) / sl
     ONE_LOT_PRICE = 100_000
-    lot_calcul = (PIP_VALUE / ONE_LOT_PRICE) * (
-        price_conversion_symbol_to_account_currency
-    )
+    lot_calcul = (PIP_VALUE / ONE_LOT_PRICE) * (account_currency_conversion)
     lot_size = round(lot_size, 2)
     return lot_size
 
