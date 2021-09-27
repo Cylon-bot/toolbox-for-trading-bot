@@ -13,14 +13,16 @@ from tools.market_data import load_data, get_data
 from tools.candle import Candle
 from termcolor import colored
 from bot_strat import bot_strategy
+from pathlib import Path
 
 
 def create_backtest():
     """
     create your backtest here, you have an example with the bot_strat already implemented
     """
-    symbol = "EURUSD"
+    symbol_backtest = "EURUSD"
     period_backtest = "january_2021"
+    name_strat = "bot_strat_example"
     risk = 0.5
     path_data = "january_2021.txt"
     initial_account_balance = 100_000
@@ -32,21 +34,30 @@ def create_backtest():
     # exemple : I don't put the parameter my_account because I want the initalized value None
     # don't put backtest_data parameter, it will be automatically fill by the backest class (PS : don't rename this parameter)
     kwargs = {
-        "pairs": ["EURUSD"],
+        "symbol": ["EURUSD"],
         "risk": risk,
         "TF_list": [time_frame],
         "EMA_list": [50],
     }
     Backtest(
-        symbol,
+        symbol_backtest,
         period_backtest,
-        "bot_strat_example",
+        name_strat,
         risk,
         initial_account_balance,
         time_frame,
         more_than_on_trade_on_going,
         delete_previous_pending_trade,
         **kwargs,
+    )
+    name_file_data = "January_2021.txt"
+    ABSOLUTE_PATH_LAUNCH = Path.cwd()
+    path_data = (
+        ABSOLUTE_PATH_LAUNCH
+        / "backtest"
+        / "data_candles"
+        / symbol_backtest
+        / name_file_data
     )
     Backtest.launch_backtest(path_data)
 
@@ -69,22 +80,22 @@ class Backtest:
 
     def __init__(
         self,
-        symbol: str,
+        symbol_backtest: str,
         period_backtest: str,
         backtest_name: str,
-        risk: float,
+        risk_backtest: float,
         initial_account_balance: float,
         time_frame: int,
         more_than_on_trade_on_going: bool,
         delete_previous_pending_trade: bool,
         **kwargs,
     ):
-        self.symbol = symbol
+        self.symbol = symbol_backtest
         self.backtest_name = backtest_name
         self.account = AccountBacktest(initial_account_balance)
         self.period_backtest = period_backtest
         PERCENTAGE_CONVERSION = 0.01
-        self.risk_percentage = risk * PERCENTAGE_CONVERSION
+        self.risk_percentage = risk_backtest * PERCENTAGE_CONVERSION
         self.max_drawdown = 0
         self.max_drawdown_percentage = 0
         self.time_frame = time_frame

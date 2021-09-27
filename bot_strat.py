@@ -26,7 +26,7 @@ def recup_all_symbol_conversion(
 
 def bot_strategy(
     my_account: Optional[Account] = None,
-    pairs: List[str] = ["EURUSD-Z"],
+    symbols: List[str] = ["EURUSD-Z"],
     account_currency: str = "USD",
     risk: float = 0.5,
     TF_list: list[int] = [mt5.TIMEFRAME_M1, mt5.TIMEFRAME_M15],
@@ -40,7 +40,9 @@ def bot_strategy(
 
     # Backtest only work with an unique TF for now. Works in progress
 
-    DATA = return_datas(pairs, TF_list, False, EMA_list, backtest_data, bollinger_band)
+    DATA = return_datas(
+        symbols, TF_list, False, EMA_list, backtest_data, bollinger_band
+    )
     if backtest_data is None:
         symbol_broker_yaml = recup_all_symbol_conversion()
         account_currency_conversion = return_datas(
