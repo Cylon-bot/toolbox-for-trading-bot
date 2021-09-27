@@ -39,7 +39,6 @@ def bot_strategy(
     """
 
     # Backtest only work with an unique TF for now. Works in progress
-
     DATA = return_datas(
         symbols, TF_list, False, EMA_list, backtest_data, bollinger_band
     )

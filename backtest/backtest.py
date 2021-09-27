@@ -34,12 +34,12 @@ def create_backtest():
     # exemple : I don't put the parameter my_account because I want the initalized value None
     # don't put backtest_data parameter, it will be automatically fill by the backest class (PS : don't rename this parameter)
     kwargs = {
-        "symbol": ["EURUSD"],
+        "symbols": ["EURUSD"],
         "risk": risk,
         "TF_list": [time_frame],
         "EMA_list": [50],
     }
-    Backtest(
+    my_backtest = Backtest(
         symbol_backtest,
         period_backtest,
         name_strat,
@@ -59,7 +59,7 @@ def create_backtest():
         / symbol_backtest
         / name_file_data
     )
-    Backtest.launch_backtest(path_data)
+    my_backtest.launch_backtest(path_data)
 
 
 class AccountBacktest:
@@ -375,7 +375,7 @@ class Backtest:
         """
         DATA_TF = data_step_to_process[f"TF {self.time_frame}"]
         LAST_CANDLE = Candle(DATA_TF.iloc[-1])
-        self.kwargs["backtest_data"] = DATA_TF
+        self.kwargs["backtest_data"] = data_step_to_process
         self.manage_on_going_trades(LAST_CANDLE)
         if not self.trade_on_going or self.more_than_on_trade_on_going:
             trade = bot_strategy(**self.kwargs)

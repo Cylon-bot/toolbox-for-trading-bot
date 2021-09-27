@@ -95,7 +95,6 @@ def return_datas(
                 time_frame,
                 from_date,
                 date_to,
-                add_EMA,
                 EMA_list,
                 backtest,
                 backtest_data,
