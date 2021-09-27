@@ -6,6 +6,7 @@ from progress.bar import FillingCirclesBar
 import yaml
 import os
 import sys
+import inspect
 import pandas as pd
 from copy import deepcopy
 from tools.market_data import load_data, get_data
@@ -346,4 +347,6 @@ class Backtest:
 
 
 def create_backtest():
-    pass
+    params_bot = inspect.signature(bot_strategy)
+    print(params_bot)
+    

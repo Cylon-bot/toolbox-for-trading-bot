@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import MetaTrader5 as mt5
 import pandas as pd
 import sys
-from typing import Dict, List
+from typing import Dict, List, Optional
 from copy import deepcopy
 from account import Account
 

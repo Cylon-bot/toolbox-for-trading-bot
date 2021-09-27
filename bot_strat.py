@@ -1,6 +1,6 @@
 import MetaTrader5 as mt5
 from termcolor import colored
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 import pandas as pd
 from tools.market_data import return_datas
 from tools.tools_trade import positions_get

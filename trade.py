@@ -1,7 +1,6 @@
 import MetaTrader5 as mt5
 from tools.tools_trade import (
     calc_position_size_forex,
-    calc_position_size_index,
     get_order_history,
     positions_get,
 )
