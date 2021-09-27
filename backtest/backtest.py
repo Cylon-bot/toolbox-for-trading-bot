@@ -329,7 +329,7 @@ class Backtest:
         LAST_CANDLE = Candle(DATA_TF.iloc[-1])
         self.manage_on_going_trades(LAST_CANDLE)
         if not self.trade_on_going or self.more_than_on_trade_on_going:
-            trade = strategy_fibonacci(**kwargs)
+            trade = bot_strategy(**kwargs)
         else:
             trade = None
         if trade is not None:
