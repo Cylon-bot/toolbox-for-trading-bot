@@ -1,17 +1,12 @@
-from datetime import datetime, timedelta
-import pytz
 import MetaTrader5 as mt5
-from typing import List, Optional, Union, Tuple, Dict
+from typing import Dict
 from progress.bar import FillingCirclesBar
 import yaml
 import os
-import sys
-import inspect
 import pandas as pd
 from copy import deepcopy
-from tools.market_data import load_data, get_data
+from tools.market_data import load_data
 from tools.candle import Candle
-from termcolor import colored
 from bot_strat import bot_strategy
 from pathlib import Path
 
@@ -22,9 +17,11 @@ __maintainer__ = "Thibault Delrieu"
 __email__ = "thibault.delrieu.pro@gmail.com"
 __status__ = "Production"
 
+
 def create_backtest():
     """
-    create your backtest here, you have an example with the bot_strat already implemented
+    create your backtest here, you have an example
+    with the bot_strat already implemented
     """
     symbol_backtest = "EURUSD"
     period_backtest = "january_2021"
@@ -35,10 +32,14 @@ def create_backtest():
     time_frame = mt5.TIMEFRAME_M1
     more_than_on_trade_on_going = False
     delete_previous_pending_trade = False
-    # here you need to create a dictionary with the name of the parameter in your strat function as key and input as value
-    # you don't have to put the parameters inside kwargs if they are already initialized and you don't want to change them
-    # exemple : I don't put the parameter my_account because I want the initalized value None
-    # don't put backtest_data parameter, it will be automatically fill by the backest class (PS : don't rename this parameter)
+    # here you need to create a dictionary with the name of the
+    # parameters in your strat function as key and input as value
+    # you don't have to put the parameters inside kwargs if they
+    # are already initialized and you don't want to change them
+    # exemple : I don't put the parameter my_account because I
+    # want the initalized value None
+    # don't put backtest_data parameter, it will be automatically
+    # fill by the backest class (PS : don't rename this parameter)
     kwargs = {
         "symbol": "EURUSD",
         "risk": risk,
@@ -81,7 +82,8 @@ class AccountBacktest:
 
 class Backtest:
     """
-    class which create a backtest of a given symbol, strategy, and diverse parameters
+    class which create a backtest of a given symbol, 
+    strategy, and diverse parameters
     """
 
     def __init__(
