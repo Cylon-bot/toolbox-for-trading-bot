@@ -28,7 +28,8 @@ def bot_strategy(
     put your strat here
     """
 
-    # Backtest only work with an unique TF for now. Works in progress
+    # NB1 : use Account class to pass attribute to the next iteration of this function (don't hesitate to create attribute inside init in Account class)
+    # NB2 : Backtest only work with an unique TF for now. Works in progress
     DATA = return_datas(
         symbols, TF_list, False, EMA_list, backtest_data, bollinger_band
     )
@@ -43,23 +44,37 @@ def bot_strategy(
     PIPS = 0.0001
     MICRO_PIPS = 0.00001
 
-    LAST_CANDLE_FIRST_TF = Candle(DATA[TF_list[0]].iloc[-1], EMA_list = EMA_list)
+    LAST_CANDLE_FIRST_TF = Candle(DATA[TF_list[0]].iloc[-1], EMA_list=EMA_list)
 
     # if you want your bot to trade only between 9H and 17H for (UTC+2)-PARIS but 8 and 16 on mt5)
     last_candle_hour = LAST_CANDLE_FIRST_TF.date.hour
     if last_candle_hour < 9 or last_candle_hour > 17:
         return None
 
-    #####################
-    ### Bot strat #######
-    #####################
-    if price > LAST_CANDLE_FIRST_TF[f"EMA{EMA_list[0]}"] 
-    order_type = mt5.ORDER_TYPE_SELL_LIMIT
-    price = None
-    tp = None
-    sl = None
-    size = None
-    comment = "my bot trade"
+    ########################
+    ###### Manage bot ######
+    ########################
+
+    if backtest_data is None:
+        trade_open = manage_live_bot(LAST_CANDLE_FIRST_TF)
+
+    #######################
+    ###### Bot strat ######
+    #######################
+    if not trade_open:
+        price = None
+        size = None
+        if LAST_CANDLE_FIRST_TF["close"] > LAST_CANDLE_FIRST_TF[f"EMA{EMA_list[0]}"]:
+            sl = LAST_CANDLE_FIRST_TF["close"] - 3 * PIPS
+            tp = LAST_CANDLE_FIRST_TF["close"] + 6 * PIPS
+            order_type = mt5.ORDER_TYPE_BUY
+        else:
+            sl = LAST_CANDLE_FIRST_TF["close"] + 3 * PIPS
+            tp = LAST_CANDLE_FIRST_TF["close"] - 6 * PIPS
+            order_type = mt5.ORDER_TYPE_SELL
+        comment = "my_bot_trade"
+    else:
+        return None
     ####################
     ### Taking trade ###
     ####################
@@ -78,6 +93,7 @@ def bot_strategy(
             comment,
             account_currency_conversion,
         )
+        # stock the attribute in my_account object for using it in the next iteration of the function
     else:
         info_trade = {
             "order_type": order_type,
@@ -99,12 +115,26 @@ def bot_strategy(
     return None
 
 
+def manage_live_bot(LAST_CANDLE: Candle):
+    """
+    manage on going trade
+    """
+
+    all_trade_on_going = positions_get()
+    for trade in all_trade_on_going.iloc():
+        comment_trade = trade["comment"]
+        if comment_trade != "my_bot_trade":
+            continue
+        if LAST_CANDLE["close"] > LAST_CANDLE_FIRST_TF[f"EMA{EMA_list[1]}"]:
+            trade_is_closed = close_one_trade_on_going(trade)
+            if trade_is_closed:
+                print(colored(f"succesfully closed trade : \n{trade}", "green"))
+                return False
+        return True
+    return False
 
 
-
-def live_trading(
-    account_currency: str, risk: float, pair_list: List[str]
-):
+def live_trading(account_currency: str, risk: float, pair_list: List[str]):
     """
     launch the bot every minute
     """

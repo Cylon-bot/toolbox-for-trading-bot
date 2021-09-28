@@ -15,6 +15,7 @@ class Account:
     ):
 
         self.get_account_info()
+        self.trade_open = False
         self.trade_on_going = {}
         self.trade_pending = {}
         self.account_currency = account_currency

@@ -9,6 +9,7 @@ from account import Account
 import yaml
 from pathlib import Path
 
+
 def calc_lot_forex(
     risk: float,
     currency_2: str,
@@ -195,6 +196,7 @@ def check_symbol(pair: str):
             return False
     return True
 
+
 def take_trade(
     my_account: Account,
     pair: str,
@@ -225,6 +227,7 @@ def take_trade(
     )
     return new_trade_is_open, result
 
+
 def recup_all_symbol_conversion(
     path_symbol_broker: str = "symbol_broker.yaml",
 ) -> Dict[str, List[str]]:
@@ -233,3 +236,51 @@ def recup_all_symbol_conversion(
     with open(SYMBOL_BROKER_PATH) as symbol_broker_file:
         symbol_broker_yaml = yaml.load(symbol_broker_file, Loader=yaml.FullLoader)
     return symbol_broker_yaml
+
+
+def close_one_trade_on_going(trade: pd.Series):
+    if (
+        trade["type"] == mt5.ORDER_TYPE_BUY
+        or trade["type"] == mt5.ORDER_TYPE_BUY_STOP
+        or trade["type"] == mt5.ORDER_TYPE_BUY_LIMIT
+    ):
+        order_type_close = mt5.ORDER_TYPE_SELL
+        price_close = mt5.symbol_info_tick(trade["symbol"]).bid
+    elif (
+        trade["type"] == mt5.ORDER_TYPE_SELL
+        or trade["type"] == mt5.ORDER_TYPE_SELL_STOP
+        or trade["type"] == mt5.ORDER_TYPE_SELL_LIMIT
+    ):
+        order_type_close = mt5.ORDER_TYPE_BUY
+        price_close = mt5.symbol_info_tick(trade["symbol"]).ask
+    volume_to_close = float(trade["volume"])
+    close_request = {
+        "action": mt5.TRADE_ACTION_DEAL,
+        "symbol": trade["symbol"],
+        "volume": volume_to_close,
+        "type": order_type_close,
+        "position": int(trade["ticket"]),
+        "price": price_close,
+        "magic": 5430,
+        "deviation": 50,
+        "comment": f"Close from robot",
+        "type_time": mt5.ORDER_TIME_GTC,
+        "type_filling": mt5.ORDER_FILLING_IOC,
+    }
+    result_close_request = mt5.order_send(close_request)
+    while result_close_request.comment == "Requote":
+        if order_type_close == mt5.ORDER_TYPE_BUY:
+            price_close = mt5.symbol_info_tick(trade["symbol"]).ask
+            close_request["price"] = price_close
+        elif order_type_close == mt5.ORDER_TYPE_SELL:
+            price_close = mt5.symbol_info_tick(trade["symbol"]).bid
+            close_request["price"] = price_close
+        result_close_request = mt5.order_send(close_request)
+
+    if result_close_request.retcode != mt5.TRADE_RETCODE_DONE:
+        print(result_close_request)
+        print("Failed to close order :(")
+        return False
+    else:
+        print("Order successfully closed!")
+        return True
