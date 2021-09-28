@@ -27,7 +27,7 @@ def create_backtest():
     path_data = "january_2021.txt"
     initial_account_balance = 100_000
     time_frame = mt5.TIMEFRAME_M1
-    more_than_on_trade_on_going = True
+    more_than_on_trade_on_going = False
     delete_previous_pending_trade = False
     # here you need to create a dictionary with the name of the parameter in your strat function as key and input as value
     # you don't have to put the parameters inside kwargs if they are already initialized and you don't want to change them
@@ -37,7 +37,7 @@ def create_backtest():
         "symbols": ["EURUSD"],
         "risk": risk,
         "TF_list": [time_frame],
-        "EMA_list": [50],
+        "EMA_list": [25, 50],
     }
     my_backtest = Backtest(
         symbol_backtest,
@@ -202,7 +202,7 @@ class Backtest:
             f"backtest/all_trade_backtest/{self.symbol}/{self.backtest_name}.yaml",
             "w",
         ) as yaml_file:
-            yaml_save = yaml.dump(message_all_trade, yaml_file)
+            yaml_save = yaml.dump(all_trade_info, yaml_file)
 
     def check_if_trade_is_on_going(self, trade, last_candle: Candle) -> Dict:
         """
@@ -305,6 +305,8 @@ class Backtest:
         """
         check if the trade SL need to be put at BE
         """
+        if trade["be"] is None :
+            return trade
         order_type = trade["order_type"]
         if (
             order_type == mt5.ORDER_TYPE_BUY
@@ -382,6 +384,8 @@ class Backtest:
         else:
             trade = None
         if trade is not None:
+            if trade["on_going"] :
+                self.trade_on_going = True
             if self.delete_previous_pending_trade:
                 self.info_all_trade = dict(
                     (key, value)

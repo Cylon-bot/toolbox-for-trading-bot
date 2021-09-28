@@ -61,47 +61,45 @@ def bot_strategy(
     #######################
     ###### Bot strat ######
     #######################
-    if not trade_open:
-        price = None
-        size = None
-        if LAST_CANDLE_FIRST_TF["close"] > LAST_CANDLE_FIRST_TF[f"EMA{EMA_list[0]}"]:
-            sl = LAST_CANDLE_FIRST_TF["close"] - 3 * PIPS
-            tp = LAST_CANDLE_FIRST_TF["close"] + 6 * PIPS
-            order_type = mt5.ORDER_TYPE_BUY
-        else:
-            sl = LAST_CANDLE_FIRST_TF["close"] + 3 * PIPS
-            tp = LAST_CANDLE_FIRST_TF["close"] - 6 * PIPS
-            order_type = mt5.ORDER_TYPE_SELL
-        comment = "my_bot_trade"
+    price = None
+    size = None
+    if LAST_CANDLE_FIRST_TF.close > LAST_CANDLE_FIRST_TF.EMAs[EMA_list[0]]:
+        sl = LAST_CANDLE_FIRST_TF.close - 3 * PIPS
+        tp = LAST_CANDLE_FIRST_TF.close + 6 * PIPS
+        order_type = mt5.ORDER_TYPE_BUY
     else:
-        return None
+        sl = LAST_CANDLE_FIRST_TF.close + 3 * PIPS
+        tp = LAST_CANDLE_FIRST_TF.close - 6 * PIPS
+        order_type = mt5.ORDER_TYPE_SELL
+    comment = "my_bot_trade"
     ####################
     ### Taking trade ###
     ####################
 
     if backtest_data is None:
-        new_trade_is_open, result = take_trade(
-            my_account,
-            pair,
-            account_currency,
-            order_type,
-            risk,
-            price,
-            tp,
-            sl,
-            size,
-            comment,
-            account_currency_conversion,
-        )
-        # stock the attribute in my_account object for using it in the next iteration of the function
+        if not trade_open:
+            new_trade_is_open, result = take_trade(
+                my_account,
+                pair,
+                account_currency,
+                order_type,
+                risk,
+                price,
+                tp,
+                sl,
+                size,
+                comment,
+                account_currency_conversion,
+            )
     else:
+        if price is None : 
+             price = float(LAST_CANDLE_FIRST_TF.close)
+        RR = float(abs(price - tp)/abs(price - sl))
         info_trade = {
             "order_type": order_type,
-            "date_entry": None,
-            "price": float(price),
-            "difference_sl_price": None,
-            "difference_tp_price": None,
-            "RR": None,
+            "date_entry": str(LAST_CANDLE_FIRST_TF.date),
+            "price": price,
+            "RR": RR,
             "be": None,
             "tp": float(tp),
             "sl": float(sl),
@@ -125,7 +123,7 @@ def manage_live_bot(LAST_CANDLE: Candle):
         comment_trade = trade["comment"]
         if comment_trade != "my_bot_trade":
             continue
-        if LAST_CANDLE["close"] > LAST_CANDLE_FIRST_TF[f"EMA{EMA_list[1]}"]:
+        if LAST_CANDLE["close"] > LAST_CANDLE_FIRST_TF.EMAs[EMA_list[0]]:
             trade_is_closed = close_one_trade_on_going(trade)
             if trade_is_closed:
                 print(colored(f"succesfully closed trade : \n{trade}", "green"))
