@@ -4,6 +4,12 @@ from backtest.backtest import create_backtest
 from bot_strat import live_trading
 from typing import List
 
+__author__ = "Thibault Delrieu"
+__copyright__ = "Copyright 2021, Thibault Delrieu"
+__license__ = "MIT"
+__maintainer__ = "Thibault Delrieu"
+__email__ = "thibault.delrieu.pro@gmail.com"
+__status__ = "Production"
 
 @click.command()
 @click.option(

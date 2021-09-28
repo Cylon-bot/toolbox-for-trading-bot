@@ -8,6 +8,12 @@ import pickle as pck
 import pytz
 import talib as ta
 
+__author__ = "Thibault Delrieu"
+__copyright__ = "Copyright 2021, Thibault Delrieu"
+__license__ = "MIT"
+__maintainer__ = "Thibault Delrieu"
+__email__ = "thibault.delrieu.pro@gmail.com"
+__status__ = "Production"
 
 def get_data(
     symbols: List[str],

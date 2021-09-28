@@ -10,6 +10,12 @@ from termcolor import colored
 from pathlib import Path
 import yaml
 
+__author__ = "Thibault Delrieu"
+__copyright__ = "Copyright 2021, Thibault Delrieu"
+__license__ = "MIT"
+__maintainer__ = "Thibault Delrieu"
+__email__ = "thibault.delrieu.pro@gmail.com"
+__status__ = "Production"
 
 class Trade:
     """

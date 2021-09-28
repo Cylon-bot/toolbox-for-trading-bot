@@ -15,6 +15,12 @@ from termcolor import colored
 from bot_strat import bot_strategy
 from pathlib import Path
 
+__author__ = "Thibault Delrieu"
+__copyright__ = "Copyright 2021, Thibault Delrieu"
+__license__ = "MIT"
+__maintainer__ = "Thibault Delrieu"
+__email__ = "thibault.delrieu.pro@gmail.com"
+__status__ = "Production"
 
 def create_backtest():
     """

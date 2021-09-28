@@ -1,6 +1,12 @@
 import pandas as pd
 from typing import List, Optional
 
+__author__ = "Thibault Delrieu"
+__copyright__ = "Copyright 2021, Thibault Delrieu"
+__license__ = "MIT"
+__maintainer__ = "Thibault Delrieu"
+__email__ = "thibault.delrieu.pro@gmail.com"
+__status__ = "Production"
 
 class Candle:
     """
