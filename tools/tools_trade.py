@@ -12,7 +12,7 @@ from pathlib import Path
 
 def calc_lot_forex(
     risk: float,
-    currency_2: str,
+    symbol: str,
     sl: float,
     balance: float,
     account_currency_conversion: float,
@@ -22,14 +22,15 @@ def calc_lot_forex(
     """
     PERCENTAGE_CONVERTER = 0.01
     RISK_PERCENTAGE = risk * PERCENTAGE_CONVERTER
-    if currency_2 == "JPY":
+    CURRENCY_2 = symbol[3:6]
+    if CURRENCY_2 == "JPY":
         JPY_PIP_CONVERTER = 100
         PIP_VALUE = (balance * RISK_PERCENTAGE) / (sl * JPY_PIP_CONVERTER)
     else:
         PIP_VALUE = (balance * RISK_PERCENTAGE) / sl
     ONE_LOT_PRICE = 100_000
     lot_calcul = (PIP_VALUE / ONE_LOT_PRICE) * (account_currency_conversion)
-    lot_size = round(lot_size, 2)
+    lot_size = round(lot_calcul, 2)
     return lot_size
 
 
@@ -81,9 +82,7 @@ def calc_position_size_forex(
     account_currency_conversion = calc_account_currency_conversion(
         account_currency, symbol, current_price_symbols
     )
-    lot_size = calc_lot_forex(
-        risk, CURRENCY_2, sl, BALANCE, account_currency_conversion
-    )
+    lot_size = calc_lot_forex(risk, symbol, sl, BALANCE, account_currency_conversion)
     return lot_size
 
 
@@ -195,37 +194,6 @@ def check_symbol(pair: str):
         if not mt5.symbol_select(pair, True):
             return False
     return True
-
-
-def take_trade(
-    my_account: Account,
-    pair: str,
-    account_currency: str,
-    order_type: int,
-    risk: float,
-    price: Optional[float],
-    tp: Optional[float],
-    sl: Optional[float],
-    size: Optional[float],
-    comment: str,
-    lot_all_pair: pd.DataFrame,
-) -> (bool, "MqlTradeRequest"):
-    """
-    create a new trade and open it
-    """
-    new_trade = Trade(
-        pair,
-        order_type,
-        price=price,
-        tp=tp,
-        sl=sl,
-        magic_number=545642,
-        comment=comment,
-    )
-    new_trade_is_open, result = new_trade.open_position(
-        my_account, account_currency, risk, lot_all_pair, size=size
-    )
-    return new_trade_is_open, result
 
 
 def recup_all_symbol_conversion(

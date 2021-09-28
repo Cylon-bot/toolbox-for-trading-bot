@@ -10,7 +10,7 @@ import talib as ta
 
 
 def get_data(
-    pairs: List[str],
+    symbols: List[str],
     time_frame: int,
     utc_from: datetime,
     date_to: datetime,
@@ -28,7 +28,7 @@ def get_data(
     """
     pair_data = dict()
     if not backtest:
-        for pair in pairs:
+        for pair in symbols:
             date_to = datetime(
                 date_to.year,
                 date_to.month,
@@ -36,7 +36,6 @@ def get_data(
                 hour=date_to.hour,
                 minute=date_to.minute,
             )
-
             rates = mt5.copy_rates_range(pair, time_frame, utc_from, date_to)
             rates_frame = pd.DataFrame(rates)
             rates_frame["time"] = pd.to_datetime(rates_frame["time"], unit="s")
@@ -70,7 +69,7 @@ def get_time_frame_needed(TF: int = mt5.TIMEFRAME_M1) -> Dict[int, datetime]:
 
 
 def return_datas(
-    pairs: List[str],
+    symbols: List[str],
     TF_list: list[int],
     datas_for_lot: bool,
     EMA_list: Optional[List[int]] = None,
@@ -91,7 +90,7 @@ def return_datas(
         TF_FROM_DATE = get_time_frame_needed(TF)
         for time_frame, from_date in TF_FROM_DATE.items():
             data_candles_all_tf[time_frame] = get_data(
-                pairs,
+                symbols,
                 time_frame,
                 from_date,
                 date_to,

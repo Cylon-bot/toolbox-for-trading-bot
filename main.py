@@ -12,28 +12,32 @@ from typing import List
 )
 @click.option(
     "--account_currency",
-    default="USD",
-    help="account currency used (str), examples : [USD, EUR]",
+    help="account currency used (str), examples : USD",
 )
-@click.option("--risk", default=0.5, type=float, help="risk used(float) : ")
+@click.option("--risk", type=float, help="risk used(float)")
 @click.option(
-    "--pair_list",
+    "-s",
+    "--symbols",
     multiple=True,
-    default=["EURUSD-Z"],
-    help="pair used(list) : [EURUSD, GBPUSD]",
+    help="symbols used(list) : -s EURUSD -s GBPUSD...",
 )
 def main(
     action: str,
     account_currency: str,
     risk: float,
-    pair_list: List[str],
-    normal_account: bool = True,
+    symbols: List[str],
 ):
     """
     launch the specified action
     """
     if action == "launch_bot":
-        live_trading(account_currency, risk, pair_list)
+        if account_currency is None or risk is None or symbols is None:
+            print(
+                "You need to give us input.\naccount_currency\nrisk\nsymbols\n--help for help"
+            )
+            return None
+
+        live_trading(account_currency, risk, symbols)
     elif action == "backtest":
         create_backtest()
     else:

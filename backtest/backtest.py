@@ -34,7 +34,7 @@ def create_backtest():
     # exemple : I don't put the parameter my_account because I want the initalized value None
     # don't put backtest_data parameter, it will be automatically fill by the backest class (PS : don't rename this parameter)
     kwargs = {
-        "symbols": ["EURUSD"],
+        "symbol": "EURUSD",
         "risk": risk,
         "TF_list": [time_frame],
         "EMA_list": [25, 50],
@@ -305,7 +305,7 @@ class Backtest:
         """
         check if the trade SL need to be put at BE
         """
-        if trade["be"] is None :
+        if trade["be"] is None:
             return trade
         order_type = trade["order_type"]
         if (
@@ -384,7 +384,7 @@ class Backtest:
         else:
             trade = None
         if trade is not None:
-            if trade["on_going"] :
+            if trade["on_going"]:
                 self.trade_on_going = True
             if self.delete_previous_pending_trade:
                 self.info_all_trade = dict(

@@ -3,20 +3,31 @@ from termcolor import colored
 from typing import List, Optional, Union, Dict
 import pandas as pd
 from tools.market_data import return_datas
-from tools.tools_trade import positions_get, take_trade, recup_all_symbol_conversion
+from tools.tools_trade import (
+    positions_get,
+    recup_all_symbol_conversion,
+    close_one_trade_on_going,
+)
 from account import Account
 from tools.candle import Candle
 from random import choice
-import schedule
 from trade import Trade
+import schedule
 import time
 import yaml
 from pathlib import Path
 
+__author__ = "Thibault Delrieu"
+__copyright__ = "Copyright 2021, Thibault Delrieu"
+__license__ = "MIT"
+__maintainer__ = "Thibault Delrieu"
+__email__ = "thibault.delrieu.pro@gmail.com"
+__status__ = "Production"
+
 
 def bot_strategy(
     my_account: Optional[Account] = None,
-    symbols: List[str] = ["EURUSD-Z"],
+    symbol: str = "EURUSD",
     account_currency: str = "USD",
     risk: float = 0.5,
     TF_list: list[int] = [mt5.TIMEFRAME_M1, mt5.TIMEFRAME_M15],
@@ -29,22 +40,22 @@ def bot_strategy(
     """
 
     # NB1 : use Account class to pass attribute to the next iteration of this function (don't hesitate to create attribute inside init in Account class)
-    # NB2 : Backtest only work with an unique TF for now. Works in progress
+    # NB2 : Backtest only work with a unique TF for now. Works in progress
     DATA = return_datas(
-        symbols, TF_list, False, EMA_list, backtest_data, bollinger_band
+        [symbol], TF_list, False, EMA_list, backtest_data, bollinger_band
     )
     if backtest_data is None:
         symbol_broker_yaml = recup_all_symbol_conversion()
         account_currency_conversion = return_datas(
             symbol_broker_yaml["calcul_for_lot"], [mt5.TIMEFRAME_M1], True
         )
-    else:
+        DATA_TF_1 = DATA[TF_list[0]][symbol]
+    else: 
         DATA_TF_1 = DATA[TF_list[0]]
 
     PIPS = 0.0001
     MICRO_PIPS = 0.00001
-
-    LAST_CANDLE_FIRST_TF = Candle(DATA[TF_list[0]].iloc[-1], EMA_list=EMA_list)
+    LAST_CANDLE_FIRST_TF = Candle(DATA_TF_1.iloc[-1], EMA_list=EMA_list)
 
     # if you want your bot to trade only between 9H and 17H for (UTC+2)-PARIS but 8 and 16 on mt5)
     last_candle_hour = LAST_CANDLE_FIRST_TF.date.hour
@@ -56,7 +67,7 @@ def bot_strategy(
     ########################
 
     if backtest_data is None:
-        trade_open = manage_live_bot(LAST_CANDLE_FIRST_TF)
+        trade_open = manage_live_bot(LAST_CANDLE_FIRST_TF, EMA_list)
 
     #######################
     ###### Bot strat ######
@@ -67,10 +78,12 @@ def bot_strategy(
         sl = LAST_CANDLE_FIRST_TF.close - 3 * PIPS
         tp = LAST_CANDLE_FIRST_TF.close + 6 * PIPS
         order_type = mt5.ORDER_TYPE_BUY
-    else:
+    elif LAST_CANDLE_FIRST_TF.close < LAST_CANDLE_FIRST_TF.EMAs[EMA_list[0]]:
         sl = LAST_CANDLE_FIRST_TF.close + 3 * PIPS
         tp = LAST_CANDLE_FIRST_TF.close - 6 * PIPS
         order_type = mt5.ORDER_TYPE_SELL
+    else :
+        return None
     comment = "my_bot_trade"
     ####################
     ### Taking trade ###
@@ -80,7 +93,7 @@ def bot_strategy(
         if not trade_open:
             new_trade_is_open, result = take_trade(
                 my_account,
-                pair,
+                symbol,
                 account_currency,
                 order_type,
                 risk,
@@ -92,9 +105,9 @@ def bot_strategy(
                 account_currency_conversion,
             )
     else:
-        if price is None : 
-             price = float(LAST_CANDLE_FIRST_TF.close)
-        RR = float(abs(price - tp)/abs(price - sl))
+        if price is None:
+            price = float(LAST_CANDLE_FIRST_TF.close)
+        RR = float(abs(price - tp) / abs(price - sl))
         info_trade = {
             "order_type": order_type,
             "date_entry": str(LAST_CANDLE_FIRST_TF.date),
@@ -113,9 +126,40 @@ def bot_strategy(
     return None
 
 
-def manage_live_bot(LAST_CANDLE: Candle):
+def take_trade(
+    my_account: Account,
+    pair: str,
+    account_currency: str,
+    order_type: int,
+    risk: float,
+    price: Optional[float],
+    tp: Optional[float],
+    sl: Optional[float],
+    size: Optional[float],
+    comment: str,
+    lot_all_pair: pd.DataFrame,
+) -> (bool, "MqlTradeRequest"):
     """
-    manage on going trade
+    create a new trade and open it
+    """
+    new_trade = Trade(
+        pair,
+        order_type,
+        price=price,
+        tp=tp,
+        sl=sl,
+        magic_number=545642,
+        comment=comment,
+    )
+    new_trade_is_open, result = new_trade.open_position(
+        my_account, account_currency, risk, lot_all_pair, size=size
+    )
+    return new_trade_is_open, result
+
+
+def manage_live_bot(LAST_CANDLE: Candle, EMA_list: List[int]):
+    """
+    manage on going trade and return True if a trade is on going
     """
 
     all_trade_on_going = positions_get()
@@ -123,16 +167,15 @@ def manage_live_bot(LAST_CANDLE: Candle):
         comment_trade = trade["comment"]
         if comment_trade != "my_bot_trade":
             continue
-        if LAST_CANDLE["close"] > LAST_CANDLE_FIRST_TF.EMAs[EMA_list[0]]:
-            trade_is_closed = close_one_trade_on_going(trade)
-            if trade_is_closed:
-                print(colored(f"succesfully closed trade : \n{trade}", "green"))
-                return False
+            #if you want to manage your trade you can close it here with some condition
+            #trade_is_closed = close_one_trade_on_going(trade)
+            #if trade_is_closed:
+            #    print(colored(f"succesfully closed trade : \n{trade}", "green"))
         return True
     return False
 
 
-def live_trading(account_currency: str, risk: float, pair_list: List[str]):
+def live_trading(account_currency: str, risk: float, symbols: List[str]):
     """
     launch the bot every minute
     """
@@ -140,15 +183,15 @@ def live_trading(account_currency: str, risk: float, pair_list: List[str]):
         account_currency=account_currency,
         original_risk=risk,
     )
-    my_account.connect(credential="your_credential.yaml")
-    for pair in pair_list:
+    my_account.connect(credential="demo_account_test.yaml")
+    for symbol in symbols:
         schedule_object = (
             schedule.every(1)
             .minutes.at(":01")
             .do(
                 bot_strategy,
                 my_account,
-                pair,
+                symbol,
                 account_currency,
                 risk,
             )
