@@ -22,11 +22,6 @@ from typing import List
     default=["EURUSD-Z"],
     help="pair used(list) : [EURUSD, GBPUSD]",
 )
-@click.option(
-    "--normal_account",
-    default=True,
-    help="normal account(bool), if you trade at admiral market, you need to specifie False",
-)
 def main(
     action: str,
     account_currency: str,
@@ -38,7 +33,7 @@ def main(
     launch the specified action
     """
     if action == "launch_bot":
-        live_trading(account_currency, risk, pair_list, normal_account)
+        live_trading(account_currency, risk, pair_list)
     elif action == "backtest":
         create_backtest()
     else:

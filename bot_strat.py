@@ -3,7 +3,7 @@ from termcolor import colored
 from typing import List, Optional, Union, Dict
 import pandas as pd
 from tools.market_data import return_datas
-from tools.tools_trade import positions_get
+from tools.tools_trade import positions_get, take_trade, recup_all_symbol_conversion
 from account import Account
 from tools.candle import Candle
 from random import choice
@@ -14,16 +14,6 @@ import yaml
 from pathlib import Path
 
 
-def recup_all_symbol_conversion(
-    path_symbol_broker: str = "symbol_broker.yaml",
-) -> Dict[str, List[str]]:
-    ABSOLUTE_PATH_LAUNCH = Path.cwd()
-    SYMBOL_BROKER_PATH = ABSOLUTE_PATH_LAUNCH / path_symbol_broker
-    with open(SYMBOL_BROKER_PATH) as symbol_broker_file:
-        symbol_broker_yaml = yaml.load(symbol_broker_file, Loader=yaml.FullLoader)
-    return symbol_broker_yaml
-
-
 def bot_strategy(
     my_account: Optional[Account] = None,
     symbols: List[str] = ["EURUSD-Z"],
@@ -31,7 +21,7 @@ def bot_strategy(
     risk: float = 0.5,
     TF_list: list[int] = [mt5.TIMEFRAME_M1, mt5.TIMEFRAME_M15],
     backtest_data: Optional[dict[str, pd.DataFrame]] = None,
-    EMA_list: Optional[List[int]] = None,
+    EMA_list: Optional[List[int]] = [25, 50],
     bollinger_band: bool = False,
 ) -> Optional[dict[str, Union[bool, str, float, int]]]:
     """
@@ -53,9 +43,9 @@ def bot_strategy(
     PIPS = 0.0001
     MICRO_PIPS = 0.00001
 
-    LAST_CANDLE_FIRST_TF = Candle(DATA[TF_list[0]].iloc[-1])
+    LAST_CANDLE_FIRST_TF = Candle(DATA[TF_list[0]].iloc[-1], EMA_list = EMA_list)
 
-    # if you want your bot to trade only between 9H and 17H (8 and 16 on mt5)
+    # if you want your bot to trade only between 9H and 17H for (UTC+2)-PARIS but 8 and 16 on mt5)
     last_candle_hour = LAST_CANDLE_FIRST_TF.date.hour
     if last_candle_hour < 9 or last_candle_hour > 17:
         return None
@@ -63,6 +53,7 @@ def bot_strategy(
     #####################
     ### Bot strat #######
     #####################
+    if price > LAST_CANDLE_FIRST_TF[f"EMA{EMA_list[0]}"] 
     order_type = mt5.ORDER_TYPE_SELL_LIMIT
     price = None
     tp = None
@@ -108,39 +99,11 @@ def bot_strategy(
     return None
 
 
-def take_trade(
-    my_account: Account,
-    pair: str,
-    account_currency: str,
-    order_type: int,
-    risk: float,
-    price: Optional[float],
-    tp: Optional[float],
-    sl: Optional[float],
-    size: Optional[float],
-    comment: str,
-    lot_all_pair: pd.DataFrame,
-) -> (bool, "MqlTradeRequest"):
-    """
-    create a new trade and open it
-    """
-    new_trade = Trade(
-        pair,
-        order_type,
-        price=price,
-        tp=tp,
-        sl=sl,
-        magic_number=545642,
-        comment=comment,
-    )
-    new_trade_is_open, result = new_trade.open_position(
-        my_account, account_currency, risk, lot_all_pair, size=size
-    )
-    return new_trade_is_open, result
+
 
 
 def live_trading(
-    account_currency: str, risk: float, pair_list: List[str], normal_account
+    account_currency: str, risk: float, pair_list: List[str]
 ):
     """
     launch the bot every minute
@@ -148,7 +111,6 @@ def live_trading(
     my_account = Account(
         account_currency=account_currency,
         original_risk=risk,
-        normal_account=normal_account,
     )
     my_account.connect(credential="your_credential.yaml")
     for pair in pair_list:

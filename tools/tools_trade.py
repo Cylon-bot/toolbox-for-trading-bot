@@ -6,7 +6,8 @@ import sys
 from typing import Dict, List, Optional
 from copy import deepcopy
 from account import Account
-
+import yaml
+from pathlib import Path
 
 def calc_lot_forex(
     risk: float,
@@ -193,3 +194,42 @@ def check_symbol(pair: str):
         if not mt5.symbol_select(pair, True):
             return False
     return True
+
+def take_trade(
+    my_account: Account,
+    pair: str,
+    account_currency: str,
+    order_type: int,
+    risk: float,
+    price: Optional[float],
+    tp: Optional[float],
+    sl: Optional[float],
+    size: Optional[float],
+    comment: str,
+    lot_all_pair: pd.DataFrame,
+) -> (bool, "MqlTradeRequest"):
+    """
+    create a new trade and open it
+    """
+    new_trade = Trade(
+        pair,
+        order_type,
+        price=price,
+        tp=tp,
+        sl=sl,
+        magic_number=545642,
+        comment=comment,
+    )
+    new_trade_is_open, result = new_trade.open_position(
+        my_account, account_currency, risk, lot_all_pair, size=size
+    )
+    return new_trade_is_open, result
+
+def recup_all_symbol_conversion(
+    path_symbol_broker: str = "symbol_broker.yaml",
+) -> Dict[str, List[str]]:
+    ABSOLUTE_PATH_LAUNCH = Path.cwd()
+    SYMBOL_BROKER_PATH = ABSOLUTE_PATH_LAUNCH / path_symbol_broker
+    with open(SYMBOL_BROKER_PATH) as symbol_broker_file:
+        symbol_broker_yaml = yaml.load(symbol_broker_file, Loader=yaml.FullLoader)
+    return symbol_broker_yaml

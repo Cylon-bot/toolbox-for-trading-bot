@@ -12,7 +12,6 @@ class Account:
         self,
         account_currency: str = "USD",
         original_risk: float = 1,
-        normal_account: bool = False,
     ):
 
         self.get_account_info()
@@ -20,7 +19,6 @@ class Account:
         self.trade_pending = {}
         self.account_currency = account_currency
         self.original_risk = original_risk
-        self.normal_account = normal_account
 
     def connect(self, credential: str = "demo_account.yaml"):
         """
