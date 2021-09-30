@@ -31,7 +31,6 @@ def create_backtest():
     period_backtest = "january_2021"
     name_strat = "bot_strat_example"
     risk = 0.5
-    path_data = "january_2021.txt"
     name_file_data = "January_2021.txt"
     initial_account_balance = 100_000
     time_frame = mt5.TIMEFRAME_M1
