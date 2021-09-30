@@ -16,6 +16,12 @@ import schedule
 import time
 import yaml
 from pathlib import Path
+try :
+    from personnal_bot import live_trading_personnal_strat
+    MY_PERSONNAL_BOT = True
+except :
+    MY_PERSONNAL_BOT = False
+
 
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
@@ -179,23 +185,26 @@ def live_trading(account_currency: str, risk: float, symbols: List[str]):
     """
     launch the bot every minute
     """
-    my_account = Account(
-        account_currency=account_currency,
-        original_risk=risk,
-    )
-    my_account.connect(credential="demo_account_test.yaml")
-    for symbol in symbols:
-        schedule_object = (
-            schedule.every(1)
-            .minutes.at(":01")
-            .do(
-                bot_strategy,
-                my_account,
-                symbol,
-                account_currency,
-                risk,
-            )
+    if MY_PERSONNAL_BOT :
+        live_trading_personnal_strat(account_currency, risk, symbols)
+    else : 
+        my_account = Account(
+            account_currency=account_currency,
+            original_risk=risk,
         )
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+        my_account.connect(credential="demo_account_test.yaml")
+        for symbol in symbols:
+            schedule_object = (
+                schedule.every(1)
+                .minutes.at(":01")
+                .do(
+                    bot_strategy,
+                    my_account,
+                    symbol,
+                    account_currency,
+                    risk,
+                )
+            )
+        while True:
+            schedule.run_pending()
+            time.sleep(1)

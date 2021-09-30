@@ -1,5 +1,6 @@
 venv39/
 demo_account_test.yaml
+personnal_bot.py
 # Byte-compiled / optimized / DLL files 
 pycache/
 *.py[cod]
