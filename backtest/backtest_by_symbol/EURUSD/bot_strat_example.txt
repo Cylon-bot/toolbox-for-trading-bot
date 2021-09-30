@@ -126,3 +126,19 @@ Max drawdown percentage: 46.06 %
 
 ----------------------------------------------------------------------------------------------------
 
+Strategy used: bot_strat_example
+Symbol Backtested: EURUSD
+Period Backtested: january_2021
+Times frame used: 1
+Initial balance: 100000
+Balance after backtest: 154707.23
+Risk taken for each trade: 0.5
+Number of trade taken: 244
+Number of wins: 48
+Number of looses: 196
+win/loose ratio: 20.0 %
+Max drawdown: 16983.95
+Max drawdown percentage: 12.70 %
+
+----------------------------------------------------------------------------------------------------
+

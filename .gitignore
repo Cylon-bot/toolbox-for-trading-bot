@@ -1,5 +1,10 @@
 venv39/
 demo_account_test.yaml
+backtest/backtest_by_symbol/personnal_EURUSD/
+backtest/all_trade_backtest/personnal_EURUSD/
+backtest/my_personnal_data_candles/
+backtest/all_trade_backtest/
+backtest/backtest_by_symbol/
 personnal_bot.py
 my_personnal_backtest.py
 # Byte-compiled / optimized / DLL files 
