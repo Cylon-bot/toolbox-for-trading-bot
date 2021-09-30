@@ -23,11 +23,16 @@ def create_backtest():
     create your backtest here, you have an example
     with the bot_strat already implemented
     """
+
+
+    # Modifie this part
+    ##############################################################
     symbol_backtest = "EURUSD"
     period_backtest = "january_2021"
     name_strat = "bot_strat_example"
     risk = 0.5
     path_data = "january_2021.txt"
+    name_file_data = "January_2021.txt"
     initial_account_balance = 100_000
     time_frame = mt5.TIMEFRAME_M1
     more_than_on_trade_on_going = False
@@ -46,6 +51,9 @@ def create_backtest():
         "TF_list": [time_frame],
         "EMA_list": [25, 50],
     }
+
+    # Normaly you don't have to modifie this part
+    ##############################################################
     my_backtest = Backtest(
         symbol_backtest,
         period_backtest,
@@ -57,7 +65,7 @@ def create_backtest():
         delete_previous_pending_trade,
         **kwargs,
     )
-    name_file_data = "January_2021.txt"
+    
     ABSOLUTE_PATH_LAUNCH = Path.cwd()
     path_data = (
         ABSOLUTE_PATH_LAUNCH
