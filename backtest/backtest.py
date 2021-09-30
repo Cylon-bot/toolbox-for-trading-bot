@@ -9,6 +9,11 @@ from tools.market_data import load_data
 from tools.candle import Candle
 from bot_strat import bot_strategy
 from pathlib import Path
+try :
+    from personnal_bot import my_personnal_bot_strategy
+    MY_PERSONNAL_BOT = True
+except :
+    MY_PERSONNAL_BOT = False
 
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
@@ -395,7 +400,10 @@ class Backtest:
         self.kwargs["backtest_data"] = data_step_to_process
         self.manage_on_going_trades(LAST_CANDLE)
         if not self.trade_on_going or self.more_than_on_trade_on_going:
-            trade = bot_strategy(**self.kwargs)
+            if MY_PERSONNAL_BOT :
+                trade = my_personnal_bot_strategy(**self.kwargs)
+            else :
+                trade = bot_strategy(**self.kwargs)
         else:
             trade = None
         if trade is not None:
