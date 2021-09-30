@@ -4,7 +4,7 @@ from backtest.backtest import create_backtest
 from bot_strat import live_trading
 from typing import List
 try :
-    from my_personnal_backtest import create_personnal_backtest
+    from backtest.my_personnal_backtest import create_personnal_backtest
     PERSONNAL_BACKTEST = True
 except : 
     PERSONNAL_BACKTEST = False
