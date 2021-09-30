@@ -16,10 +16,12 @@ import schedule
 import time
 import yaml
 from pathlib import Path
-try :
+
+try:
     from personnal_bot import live_trading_personnal_strat
+
     MY_PERSONNAL_BOT = True
-except :
+except:
     MY_PERSONNAL_BOT = False
 
 
@@ -56,7 +58,7 @@ def bot_strategy(
             symbol_broker_yaml["calcul_for_lot"], [mt5.TIMEFRAME_M1], True
         )
         DATA_TF_1 = DATA[TF_list[0]][symbol]
-    else: 
+    else:
         DATA_TF_1 = DATA[TF_list[0]]
 
     PIPS = 0.0001
@@ -88,7 +90,7 @@ def bot_strategy(
         sl = LAST_CANDLE_FIRST_TF.close + 3 * PIPS
         tp = LAST_CANDLE_FIRST_TF.close - 6 * PIPS
         order_type = mt5.ORDER_TYPE_SELL
-    else :
+    else:
         return None
     comment = "my_bot_trade"
     ####################
@@ -173,9 +175,9 @@ def manage_live_bot(LAST_CANDLE: Candle, EMA_list: List[int]):
         comment_trade = trade["comment"]
         if comment_trade != "my_bot_trade":
             continue
-            #if you want to manage your trade you can close it here with some condition
-            #trade_is_closed = close_one_trade_on_going(trade)
-            #if trade_is_closed:
+            # if you want to manage your trade you can close it here with some condition
+            # trade_is_closed = close_one_trade_on_going(trade)
+            # if trade_is_closed:
             #    print(colored(f"succesfully closed trade : \n{trade}", "green"))
         return True
     return False
@@ -185,9 +187,9 @@ def live_trading(account_currency: str, risk: float, symbols: List[str]):
     """
     launch the bot every minute
     """
-    if MY_PERSONNAL_BOT :
+    if MY_PERSONNAL_BOT:
         live_trading_personnal_strat(account_currency, risk, symbols)
-    else : 
+    else:
         my_account = Account(
             account_currency=account_currency,
             original_risk=risk,

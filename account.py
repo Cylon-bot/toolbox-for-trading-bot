@@ -9,6 +9,7 @@ __maintainer__ = "Thibault Delrieu"
 __email__ = "thibault.delrieu.pro@gmail.com"
 __status__ = "Production"
 
+
 class Account:
     """
     needed for connecting with the mt5 account

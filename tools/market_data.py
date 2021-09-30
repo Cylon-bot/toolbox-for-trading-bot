@@ -15,6 +15,7 @@ __maintainer__ = "Thibault Delrieu"
 __email__ = "thibault.delrieu.pro@gmail.com"
 __status__ = "Production"
 
+
 def get_data(
     symbols: List[str],
     time_frame: int,

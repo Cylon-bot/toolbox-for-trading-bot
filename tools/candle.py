@@ -8,6 +8,7 @@ __maintainer__ = "Thibault Delrieu"
 __email__ = "thibault.delrieu.pro@gmail.com"
 __status__ = "Production"
 
+
 class Candle:
     """
     class with all the inportant information about the candles you use for your strat

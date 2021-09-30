@@ -16,6 +16,7 @@ __maintainer__ = "Thibault Delrieu"
 __email__ = "thibault.delrieu.pro@gmail.com"
 __status__ = "Production"
 
+
 def calc_lot_forex(
     risk: float,
     symbol: str,

@@ -17,6 +17,7 @@ __maintainer__ = "Thibault Delrieu"
 __email__ = "thibault.delrieu.pro@gmail.com"
 __status__ = "Production"
 
+
 class Trade:
     """
     class use to manage all different type of market order on your mt5 account
