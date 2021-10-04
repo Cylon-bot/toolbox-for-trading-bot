@@ -38,7 +38,7 @@ def bot_strategy(
     symbol: str = "EURUSD",
     account_currency: str = "USD",
     risk: float = 0.5,
-    TF_list: list[int] = [mt5.TIMEFRAME_M1, mt5.TIMEFRAME_M15],
+    TF_list: list[int] = [mt5.TIMEFRAME_M1],
     backtest_data: Optional[dict[str, pd.DataFrame]] = None,
     EMA_list: Optional[List[int]] = [25, 50],
     bollinger_band: bool = False,
@@ -75,7 +75,7 @@ def bot_strategy(
     ########################
 
     if backtest_data is None:
-        trade_open = manage_live_bot(LAST_CANDLE_FIRST_TF, EMA_list)
+        trade_open = manage_bot(LAST_CANDLE_FIRST_TF, None)
 
     #######################
     ###### Bot strat ######
@@ -165,22 +165,33 @@ def take_trade(
     return new_trade_is_open, result
 
 
-def manage_live_bot(LAST_CANDLE: Candle, EMA_list: List[int]):
+def manage_bot(LAST_CANDLE: Candle, trade_info: Optional[Dict] = None):
     """
-    manage on going trade and return True if a trade is on going
+    manage on going trade 
+
+    If you are on backtest Mode and the STRAT_AUTO_MANAGE_TRADE (on backtest.py) is True,
+    this function will be called by the backtest and you need to return 3 output :
+    trade --> a dictionnary with the new informations of the trade (created in bot_strategy function in this file --> info_trade variable)
+    trade_closing --> a bool to specified if the trade is closed
+    result_trade  --> Optional[str] : None, "tp" or "sl".
     """
 
-    all_trade_on_going = positions_get()
-    for trade in all_trade_on_going.iloc():
-        comment_trade = trade["comment"]
-        if comment_trade != "my_bot_trade":
-            continue
-            # if you want to manage your trade you can close it here with some condition
-            # trade_is_closed = close_one_trade_on_going(trade)
-            # if trade_is_closed:
-            #    print(colored(f"succesfully closed trade : \n{trade}", "green"))
-        return True
-    return False
+    if trade_info is not None :
+        trade_closing = None
+        result_trade = None
+        return trade_info, trade_closing, result_trade
+    else :
+        all_trade_on_going = positions_get()
+        for trade in all_trade_on_going.iloc():
+            comment_trade = trade["comment"]
+            if comment_trade != "my_bot_trade":
+                continue
+                # if you want to manage your trade you can close it here with some condition
+                # trade_is_closed = close_one_trade_on_going(trade)
+                # if trade_is_closed:
+                #    print(colored(f"succesfully closed trade : \n{trade}", "green"))
+            return True
+        return False
 
 
 def live_trading(account_currency: str, risk: float, symbols: List[str]):

@@ -7,12 +7,10 @@ import pandas as pd
 from copy import deepcopy
 from tools.market_data import load_data
 from tools.candle import Candle
-from bot_strat import bot_strategy
+from bot_strat import bot_strategy, manage_bot
 from pathlib import Path
-
 try:
-    from personnal_bot import my_personnal_bot_strategy
-
+    from personnal_bot import my_personnal_bot_strategy, manage_personnal_bot
     MY_PERSONNAL_BOT = True
 except:
     MY_PERSONNAL_BOT = False
@@ -33,15 +31,16 @@ def create_backtest():
 
     # Modifie this part
     ##############################################################
-    symbol_backtest = "EURUSD"
-    period_backtest = "january_2021"
-    name_strat = "bot_strat_example"
-    risk = 0.5
-    name_file_data = "January_2021.txt"
-    initial_account_balance = 100_000
-    time_frame = mt5.TIMEFRAME_M1
-    more_than_on_trade_on_going = False
-    delete_previous_pending_trade = False
+    SYMBOL_BACKTEST = "EURUSD"
+    PERIOD_BACKTEST = "january_2021"
+    NAME_STRAT = "bot_strat_example"
+    RISK = 0.5
+    NAME_FILE_DATA = "January_2021.txt"
+    INITIAL_ACCOUNT_BALANCE = 100_000
+    TIME_FRAME = mt5.TIMEFRAME_M1
+    MORE_THAN_ON_TRADE_ON_GOING = False
+    DELETE_PREVIOUS_PENDING_TRADE = False
+    STRAT_AUTO_MANAGE_TRADE = False
     # here you need to create a dictionary with the name of the
     # parameters in your strat function as key and input as value
     # you don't have to put the parameters inside kwargs if they
@@ -50,36 +49,37 @@ def create_backtest():
     # want the initalized value None
     # don't put backtest_data parameter, it will be automatically
     # fill by the backest class (PS : don't rename this parameter)
-    kwargs = {
+    KWARGS = {
         "symbol": "EURUSD",
-        "risk": risk,
-        "TF_list": [time_frame],
+        "risk": RISK,
+        "TF_list": [TIME_FRAME],
         "EMA_list": [25, 50],
     }
 
     # Normaly you don't have to modifie this part
     ##############################################################
     my_backtest = Backtest(
-        symbol_backtest,
-        period_backtest,
-        name_strat,
-        risk,
-        initial_account_balance,
-        time_frame,
-        more_than_on_trade_on_going,
-        delete_previous_pending_trade,
+        SYMBOL_BACKTEST,
+        PERIOD_BACKTEST,
+        NAME_STRAT,
+        RISK,
+        INITIAL_ACCOUNT_BALANCE,
+        TIME_FRAME,
+        MORE_THAN_ON_TRADE_ON_GOING,
+        DELETE_PREVIOUS_PENDING_TRADE,
+        STRAT_AUTO_MANAGE_TRADE,
         **kwargs,
     )
 
     ABSOLUTE_PATH_LAUNCH = Path.cwd()
-    path_data = (
+    PATH_DATA = (
         ABSOLUTE_PATH_LAUNCH
         / "backtest"
         / "data_candles"
-        / symbol_backtest
-        / name_file_data
+        / SYMBOL_BACKTEST
+        / NAME_FILE_DATA
     )
-    my_backtest.launch_backtest(path_data)
+    my_backtest.launch_backtest(PATH_DATA)
 
 
 class AccountBacktest:
@@ -109,6 +109,7 @@ class Backtest:
         time_frame: int,
         more_than_on_trade_on_going: bool,
         delete_previous_pending_trade: bool,
+        strat_auto_manage_trade: bool,
         **kwargs,
     ):
         self.symbol = symbol_backtest
@@ -126,6 +127,7 @@ class Backtest:
         self.more_than_on_trade_on_going = more_than_on_trade_on_going
         self.trade_on_going = False
         self.kwargs = kwargs
+        self.strat_auto_manage_trade = strat_auto_manage_trade
 
     def launch_backtest(self, path_data: str) -> (float, float):
         """
@@ -308,7 +310,7 @@ class Backtest:
                 )
             else:
                 new_balance = (
-                    self.account.balance - self.account.balance * self.risk_percentage
+                    self.account.balance - self.account.balance * (self.risk_percentage * trade["sl_ratio_modified"])
                 )
         return new_balance
 
@@ -376,9 +378,15 @@ class Backtest:
                 trade = self.check_if_trade_is_on_going(trade, last_candle)
             if not trade["on_going"]:
                 continue
-            trade_closing, result_trade = self.check_if_trade_need_closing(
-                trade, last_candle
-            )
+            if self.strat_auto_manage_trade :
+                if MY_PERSONNAL_BOT : 
+                    trade, trade_closing, result_trade = manage_personnal_bot(trade, **self.kwargs)
+                else :
+                    trade, trade_closing, result_trade = manage_bot(trade, **self.kwargs)
+            else : 
+                trade_closing, result_trade = self.check_if_trade_need_closing(
+                    trade, last_candle
+                )
             RR = trade["RR"]
             if trade_closing:
                 new_balance = self.manage_balance_after_trade_closing(
@@ -388,7 +396,7 @@ class Backtest:
                 self.account.balance = new_balance
                 trade["on_going"] = False
                 self.trade_on_going = False
-            else:
+            elif not self.strat_auto_manage_trade:
                 trade = self.check_if_trade_sl_to_be(trade, last_candle)
             self.manage_drawdown()
 
