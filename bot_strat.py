@@ -167,7 +167,7 @@ def take_trade(
 
 def manage_bot(LAST_CANDLE: Candle, trade_info: Optional[Dict] = None):
     """
-    manage on going trade 
+    manage on going trade
 
     If you are on backtest Mode and the STRAT_AUTO_MANAGE_TRADE (on backtest.py) is True,
     this function will be called by the backtest and you need to return 3 output :
@@ -176,11 +176,11 @@ def manage_bot(LAST_CANDLE: Candle, trade_info: Optional[Dict] = None):
     result_trade  --> Optional[str] : None, "tp" or "sl".
     """
 
-    if trade_info is not None :
+    if trade_info is not None:
         trade_closing = None
         result_trade = None
         return trade_info, trade_closing, result_trade
-    else :
+    else:
         all_trade_on_going = positions_get()
         for trade in all_trade_on_going.iloc():
             comment_trade = trade["comment"]

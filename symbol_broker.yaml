@@ -14,3 +14,18 @@ calcul_for_lot:
     - NZDUSD
     - USDCHF
 
+calcul_for_lot_Admiral: 
+    - EURUSD-Z
+    - GBPUSD-Z
+    - EURAUD-Z
+    - EURGBP-Z
+    - EURAUD-Z
+    - EURCAD-Z
+    - EURJPY-Z
+    - EURNZD-Z
+    - EURCHF-Z
+    - AUDUSD-Z
+    - USDCAD-Z
+    - USDJPY-Z
+    - NZDUSD-Z
+    - USDCHF-Z

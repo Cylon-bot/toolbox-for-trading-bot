@@ -8,6 +8,7 @@ from copy import deepcopy
 from account import Account
 import yaml
 from pathlib import Path
+from termcolor import colored
 
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
@@ -259,3 +260,43 @@ def close_one_trade_on_going(trade: pd.Series):
     else:
         print("Order successfully closed!")
         return True
+
+
+def move_sl_to_be(trade, decal_sl_be: float):
+    stop_loss_trade = trade.sl
+    entering_price = trade.price_open
+    take_profit_trade = trade.tp
+    symbol = trade.symbol
+    ticket = trade.ticket
+    trade_comment = trade.comment
+    trade_order_type = trade.type
+    if (
+        trade_order_type == mt5.ORDER_TYPE_SELL_LIMIT
+        or trade_order_type == mt5.ORDER_TYPE_SELL
+        or trade_order_type == mt5.ORDER_TYPE_SELL_STOP
+    ):
+        decal_sl_be = -decal_sl_be
+
+    if float(stop_loss_trade) != float(entering_price + decal_sl_be):
+        modify_request = {
+            "action": mt5.TRADE_ACTION_SLTP,
+            "symbol": symbol,
+            "sl": entering_price + decal_sl_be,
+            "position": int(ticket),
+            "tp": take_profit_trade,
+            "comment": trade_comment,
+        }
+        result_modify_request = mt5.order_send(modify_request)
+        if result_modify_request.retcode != mt5.TRADE_RETCODE_DONE:
+            print(
+                f"Failed to modify order :(, retcode: {result_modify_request.retcode}"
+            )
+            print(colored(result_modify_request, "blue"))
+        else:
+            print(colored(f"\n{'-'*100}\n", "blue"))
+            print(colored(f"succesfully place SL to BE for trade :", "green"))
+
+            for key, value in trade.to_dict().items():
+                print(colored(f"{key} : {value}", "green"))
+    else:
+        pass

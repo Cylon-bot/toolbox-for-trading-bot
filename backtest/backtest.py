@@ -1,5 +1,5 @@
 import MetaTrader5 as mt5
-from typing import Dict
+from typing import Dict, Optional
 from progress.bar import FillingCirclesBar
 import yaml
 import os
@@ -9,8 +9,10 @@ from tools.market_data import load_data
 from tools.candle import Candle
 from bot_strat import bot_strategy, manage_bot
 from pathlib import Path
+
 try:
     from personnal_bot import my_personnal_bot_strategy, manage_personnal_bot
+
     MY_PERSONNAL_BOT = True
 except:
     MY_PERSONNAL_BOT = False
@@ -39,6 +41,7 @@ def create_backtest():
     INITIAL_ACCOUNT_BALANCE = 100_000
     TIME_FRAME = mt5.TIMEFRAME_M1
     MORE_THAN_ON_TRADE_ON_GOING = False
+    UNIQUE_ID_BACKTEST = "January_2021"
     DELETE_PREVIOUS_PENDING_TRADE = False
     STRAT_AUTO_MANAGE_TRADE = False
     # here you need to create a dictionary with the name of the
@@ -62,6 +65,7 @@ def create_backtest():
         SYMBOL_BACKTEST,
         PERIOD_BACKTEST,
         NAME_STRAT,
+        UNIQUE_ID_BACKTEST,
         RISK,
         INITIAL_ACCOUNT_BALANCE,
         TIME_FRAME,
@@ -104,6 +108,7 @@ class Backtest:
         symbol_backtest: str,
         period_backtest: str,
         backtest_name: str,
+        unique_id_backtest: str,
         risk_backtest: float,
         initial_account_balance: float,
         time_frame: int,
@@ -114,6 +119,7 @@ class Backtest:
     ):
         self.symbol = symbol_backtest
         self.backtest_name = backtest_name
+        self.unique_id_backtest = unique_id_backtest
         self.account = AccountBacktest(initial_account_balance)
         self.period_backtest = period_backtest
         PERCENTAGE_CONVERSION = 0.01
@@ -175,6 +181,7 @@ class Backtest:
             win_ratio = (round(win_number / (number_trades), 2)) * ONE_HUNDRED
         message = (
             f"Strategy used: {self.backtest_name}\n"
+            f"id backtest used: {self.unique_id_backtest}\n"
             f"Symbol Backtested: {self.symbol}\n"
             f"Period Backtested: {self.period_backtest}\n"
             f"Times frame used: {self.time_frame}\n"
@@ -209,15 +216,8 @@ class Backtest:
         if not os.path.exists(f"backtest/all_trade_backtest/{self.symbol}"):
             os.makedirs(f"backtest/all_trade_backtest/{self.symbol}")
 
-        if not os.path.exists(
-            f"backtest/all_trade_backtest/{self.symbol}/{self.backtest_name}"
-        ):
-            os.makedirs(
-                f"backtest/all_trade_backtest/{self.symbol}/{self.backtest_name}"
-            )
-
         with open(
-            f"backtest/backtest_by_symbol/{self.symbol}/{self.backtest_name}.txt", "a"
+            f"backtest/backtest_by_symbol/{self.symbol}/{self.backtest_name}/{self.unique_id_backtest}.txt", "a"
         ) as text_file:
             text_file.write(message)
 
@@ -292,7 +292,7 @@ class Backtest:
         return trade_closing, result_trade
 
     def manage_balance_after_trade_closing(
-        self, trade: Dict, result_trade: str, RR: float
+        self, trade: Dict, result_trade: str, RR: Optional[float]
     ):
         """
         change the balance depending if the trade is SL, TP or BE
@@ -300,17 +300,28 @@ class Backtest:
         if result_trade == "tp":
             new_balance = (
                 self.account.balance + self.account.balance * self.risk_percentage * RR
+            ) - (
+                self.account.balance
+                * self.risk_percentage
+                * 0.15  # 0.15 simulate the fee of the broker
             )
         elif result_trade == "sl":
             if trade["sl_to_be"]:
                 new_balance = self.account.balance - (
                     self.account.balance
                     * self.risk_percentage
-                    * 0.05  # 0.05 simulate the fee of the broker even if you are at BE
+                    * 0.15  # 0.15 simulate the fee of the broker even if you are at BE
                 )
             else:
                 new_balance = (
-                    self.account.balance - self.account.balance * (self.risk_percentage * trade["sl_ratio_modified"])
+                    self.account.balance
+                    - self.account.balance
+                    * (self.risk_percentage * trade["sl_ratio_modified"])
+                    - (
+                        self.account.balance
+                        * self.risk_percentage
+                        * 0.15  # 0.15 simulate the fee of the broker
+                    )
                 )
         return new_balance
 
@@ -378,12 +389,16 @@ class Backtest:
                 trade = self.check_if_trade_is_on_going(trade, last_candle)
             if not trade["on_going"]:
                 continue
-            if self.strat_auto_manage_trade :
-                if MY_PERSONNAL_BOT : 
-                    trade, trade_closing, result_trade = manage_personnal_bot(trade, **self.kwargs)
-                else :
-                    trade, trade_closing, result_trade = manage_bot(trade, **self.kwargs)
-            else : 
+            if self.strat_auto_manage_trade:
+                if MY_PERSONNAL_BOT:
+                    trade, trade_closing, result_trade = manage_personnal_bot(
+                        trade, **self.kwargs
+                    )
+                else:
+                    trade, trade_closing, result_trade = manage_bot(
+                        trade, **self.kwargs
+                    )
+            else:
                 trade_closing, result_trade = self.check_if_trade_need_closing(
                     trade, last_candle
                 )
