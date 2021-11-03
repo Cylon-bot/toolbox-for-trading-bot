@@ -9,7 +9,6 @@ from tools.market_data import load_data
 from tools.candle import Candle
 from bot_strat import bot_strategy, manage_bot
 from pathlib import Path
-
 try:
     from personnal_bot import my_personnal_bot_strategy, manage_personnal_bot
 

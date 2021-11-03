@@ -25,6 +25,7 @@ def get_data(
     backtest: bool = False,
     backtest_data: Optional[pd.DataFrame] = None,
     bollinger_band: bool = False,
+    RSI: bool = False
 ) -> Dict[str, pd.DataFrame]:
     """
     ask to the mt5 server for the data and add any specified indicator from talib librarie
@@ -50,17 +51,15 @@ def get_data(
             pair_data[pair] = rates_frame
     else:
         pair_data = backtest_data[f"TF {time_frame}"]
+
     if EMA_list is not None:
         for EMA in EMA_list:
-            if backtest:
-                pair_data = add_EMA_to_data(pair_data, backtest=backtest, EMA=EMA)
-            else:
-                pair_data = add_EMA_to_data(pair_data, backtest=backtest, EMA=EMA)
+            pair_data = add_EMA_to_data(pair_data, backtest=backtest, EMA=EMA)
     if bollinger_band:
-        if backtest:
-            pair_data = add_bollinger_to_data(pair_data, backtest=backtest)
-        else:
-            pair_data = add_bollinger_to_data(pair_data, backtest=backtest)
+        pair_data = add_bollinger_to_data(pair_data, backtest=backtest)
+
+    if RSI:
+        pair_data = add_rsi_to_data(pair_data, backtest=backtest)
     return pair_data
 
 
@@ -82,6 +81,7 @@ def return_datas(
     EMA_list: Optional[List[int]] = None,
     backtest_data: Optional[pd.DataFrame] = None,
     bollinger_band: bool = False,
+    RSI: bool = False
 ) -> Union[Dict[int, Dict[str, pd.DataFrame]], Dict[str, pd.DataFrame]]:
     """
     return datas candles with specifie information. If we need to return
@@ -105,6 +105,7 @@ def return_datas(
                 backtest,
                 backtest_data,
                 bollinger_band,
+                RSI,
             )
     if datas_for_lot:
         last_row_lot_all_pair = dict()
@@ -167,6 +168,22 @@ def add_bollinger_to_data(data_candles_all_tf: dict, backtest: bool = False):
             )
     return data_candles_all_tf
 
+def add_rsi_to_data(data_candles_all_tf: dict, backtest: bool = False, time_period: int =14):
+    """
+    add specified rsi band to data candles
+    """
+    if backtest:
+        data_candles_all_tf["RSI"] = ta.RSI(
+            data_candles_all_tf["close"],
+            timeperiod=14,
+        )
+    else :
+        for pair, pair_data in data_candles_all_tf.items():
+            pair_data["RSI"] = ta.RSI(
+                pair_data["close"],
+                timeperiod=14,
+            )  
+    return data_candles_all_tf
 
 def save_data(DATA: Dict[str, pd.DataFrame], PATH_OUTPUT: Path):
     """

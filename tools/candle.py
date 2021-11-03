@@ -18,6 +18,7 @@ class Candle:
         self,
         candle_info: pd.DataFrame,
         bollinger_band: bool = False,
+        RSI: bool = False,
         minimum_rejection: Optional[float] = None,
         EMA_list: Optional[List[int]] = None,
         body_min: Optional[float] = None,
@@ -37,6 +38,8 @@ class Candle:
             self.uper_bollinger = candle_info["uper_bollinger"]
             self.middle_bollinger = candle_info["middle_bollinger"]
             self.lower_bollinger = candle_info["lower_bollinger"]
+        if RSI:
+            self.RSI = candle_info["RSI"]
         PIPS = 0.0001
         if minimum_rejection is not None:
             minimum_rejection_PIPS = minimum_rejection * PIPS
