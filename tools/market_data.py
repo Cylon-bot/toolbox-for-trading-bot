@@ -25,7 +25,7 @@ def get_data(
     backtest: bool = False,
     backtest_data: Optional[pd.DataFrame] = None,
     bollinger_band: bool = False,
-    RSI: bool = False
+    RSI: bool = False,
 ) -> Dict[str, pd.DataFrame]:
     """
     ask to the mt5 server for the data and add any specified indicator from talib librarie
@@ -81,7 +81,7 @@ def return_datas(
     EMA_list: Optional[List[int]] = None,
     backtest_data: Optional[pd.DataFrame] = None,
     bollinger_band: bool = False,
-    RSI: bool = False
+    RSI: bool = False,
 ) -> Union[Dict[int, Dict[str, pd.DataFrame]], Dict[str, pd.DataFrame]]:
     """
     return datas candles with specifie information. If we need to return
@@ -168,7 +168,10 @@ def add_bollinger_to_data(data_candles_all_tf: dict, backtest: bool = False):
             )
     return data_candles_all_tf
 
-def add_rsi_to_data(data_candles_all_tf: dict, backtest: bool = False, time_period: int =14):
+
+def add_rsi_to_data(
+    data_candles_all_tf: dict, backtest: bool = False, time_period: int = 14
+):
     """
     add specified rsi band to data candles
     """
@@ -177,13 +180,14 @@ def add_rsi_to_data(data_candles_all_tf: dict, backtest: bool = False, time_peri
             data_candles_all_tf["close"],
             timeperiod=14,
         )
-    else :
+    else:
         for pair, pair_data in data_candles_all_tf.items():
             pair_data["RSI"] = ta.RSI(
                 pair_data["close"],
                 timeperiod=14,
-            )  
+            )
     return data_candles_all_tf
+
 
 def save_data(DATA: Dict[str, pd.DataFrame], PATH_OUTPUT: Path):
     """

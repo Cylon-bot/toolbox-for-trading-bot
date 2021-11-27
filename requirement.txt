@@ -3,7 +3,6 @@ DateTime
 MetaTrader5
 numpy
 pandas
-pathlib
 pytz
 pyyaml
 schedule

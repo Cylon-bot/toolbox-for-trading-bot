@@ -9,6 +9,7 @@ from tools.market_data import load_data
 from tools.candle import Candle
 from bot_strat import bot_strategy, manage_bot
 from pathlib import Path
+
 try:
     from personnal_bot import my_personnal_bot_strategy, manage_personnal_bot
 
@@ -216,7 +217,8 @@ class Backtest:
             os.makedirs(f"backtest/all_trade_backtest/{self.symbol}")
 
         with open(
-            f"backtest/backtest_by_symbol/{self.symbol}/{self.backtest_name}/{self.unique_id_backtest}.txt", "a"
+            f"backtest/backtest_by_symbol/{self.symbol}/{self.backtest_name}/{self.unique_id_backtest}.txt",
+            "a",
         ) as text_file:
             text_file.write(message)
 
