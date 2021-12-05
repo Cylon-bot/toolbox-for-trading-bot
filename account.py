@@ -1,6 +1,6 @@
-import MetaTrader5 as mt5
-import yaml
 from pathlib import Path
+import MetaTrader5 as Mt5
+import yaml
 
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
@@ -20,7 +20,11 @@ class Account:
         account_currency: str = "USD",
         original_risk: float = 1,
     ):
-
+        self.id_account = None
+        self.psw_account = None
+        self.server_account = None
+        self.account_owner = None
+        self.account_info = None
         self.get_account_info()
         self.trade_open = False
         self.trade_on_going = {}
@@ -31,7 +35,7 @@ class Account:
     def connect(self, credential: str = "demo_account.yaml"):
         """
         input --> yaml file path from project root with credential in it
-        exemple of a valid input file :
+        example of a valid input file :
         ##########
         Name     : Slim Shady
         Type     : Forex Hedged USD
@@ -43,16 +47,16 @@ class Account:
         In fact this function only need login, password, server and name
         but this is the file format given by mt5 when you create a demo account
         """
-        ABSOLUTE_PATH_LAUNCH = Path.cwd()
-        DEMO_ACCOUNT_CREDENTIAL_PATH = ABSOLUTE_PATH_LAUNCH / credential
-        with open(DEMO_ACCOUNT_CREDENTIAL_PATH) as credential_file:
-            DATA_CREDENTIAL_FILE = yaml.load(credential_file, Loader=yaml.FullLoader)
-        self.id_account = DATA_CREDENTIAL_FILE["Login"]
-        self.psw_account = DATA_CREDENTIAL_FILE["Password"]
-        self.server_account = DATA_CREDENTIAL_FILE["Server"]
-        self.account_owner = DATA_CREDENTIAL_FILE["Name"]
-        mt5.initialize()
-        authorized = mt5.login(self.id_account, self.psw_account, self.server_account)
+        absolute_path_launch = Path.cwd()
+        demo_account_credential_path = absolute_path_launch / credential
+        with open(demo_account_credential_path) as credential_file:
+            data_credential_file = yaml.load(credential_file, Loader=yaml.FullLoader)
+        self.id_account = data_credential_file["Login"]
+        self.psw_account = data_credential_file["Password"]
+        self.server_account = data_credential_file["Server"]
+        self.account_owner = data_credential_file["Name"]
+        Mt5.initialize()
+        authorized = Mt5.login(self.id_account, self.psw_account, self.server_account)
         if authorized:
             print("Connected: Connecting to MT5 Client with account :\n")
             print(f"Account owner : {self.account_owner}")
@@ -62,13 +66,13 @@ class Account:
         else:
             print(
                 "Failed to connect at account #{}, error code: {}".format(
-                    self.id_account, mt5.last_error()
+                    self.id_account, Mt5.last_error()
                 )
             )
             return 1
 
     def get_account_info(self):
-        self.account_info = mt5.account_info()
+        self.account_info = Mt5.account_info()
 
 
 class AccountSingleton:

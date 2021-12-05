@@ -1,5 +1,5 @@
-import MetaTrader5 as mt5
-from typing import Dict, Optional
+import MetaTrader5 as Mt5
+from typing import Dict, Optional, Union
 from progress.bar import FillingCirclesBar
 import yaml
 import os
@@ -11,11 +11,10 @@ from bot_strat import bot_strategy, manage_bot
 from pathlib import Path
 
 try:
-    from personnal_bot import my_personnal_bot_strategy, manage_personnal_bot
-
-    MY_PERSONNAL_BOT = True
-except:
-    MY_PERSONNAL_BOT = False
+    from personal_bot import my_personal_bot_strategy as bot_strategy, manage_personal_bot as manage_bot_strategy
+except ImportError:
+    bot_strategy = bot_strategy()
+    manage_bot_strategy = manage_bot()
 
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
@@ -31,59 +30,59 @@ def create_backtest():
     with the bot_strat already implemented
     """
 
-    # Modifie this part
+    # Modify this part
     ##############################################################
-    SYMBOL_BACKTEST = "EURUSD"
-    PERIOD_BACKTEST = "january_2021"
-    NAME_STRAT = "bot_strat_example"
-    RISK = 0.5
-    NAME_FILE_DATA = "January_2021.txt"
-    INITIAL_ACCOUNT_BALANCE = 100_000
-    TIME_FRAME = mt5.TIMEFRAME_M1
-    MORE_THAN_ON_TRADE_ON_GOING = False
-    UNIQUE_ID_BACKTEST = "January_2021"
-    DELETE_PREVIOUS_PENDING_TRADE = False
-    STRAT_AUTO_MANAGE_TRADE = False
+    symbol_backtest = "EURUSD"
+    period_backtest = "January_2021"
+    name_strat = "bot_strat_example"
+    risk = 0.5
+    name_file_data = "January_2021.txt"
+    initial_account_balance = 100_000
+    time_frame = Mt5.TIMEFRAME_M1
+    more_than_on_trade_on_going = False
+    unique_id_backtest = "January_2021"
+    delete_previous_pending_trade = False
+    strat_auto_manage_trade = False
     # here you need to create a dictionary with the name of the
     # parameters in your strat function as key and input as value
     # you don't have to put the parameters inside kwargs if they
     # are already initialized and you don't want to change them
-    # exemple : I don't put the parameter my_account because I
-    # want the initalized value None
+    # example : I don't put the parameter my_account because I
+    # want the initialized value None
     # don't put backtest_data parameter, it will be automatically
     # fill by the backest class (PS : don't rename this parameter)
-    KWARGS = {
+    kwargs = {
         "symbol": "EURUSD",
-        "risk": RISK,
-        "TF_list": [TIME_FRAME],
+        "risk": risk,
+        "TF_list": [time_frame],
         "EMA_list": [25, 50],
     }
 
-    # Normaly you don't have to modifie this part
+    # Normally you don't have to modify this part
     ##############################################################
     my_backtest = Backtest(
-        SYMBOL_BACKTEST,
-        PERIOD_BACKTEST,
-        NAME_STRAT,
-        UNIQUE_ID_BACKTEST,
-        RISK,
-        INITIAL_ACCOUNT_BALANCE,
-        TIME_FRAME,
-        MORE_THAN_ON_TRADE_ON_GOING,
-        DELETE_PREVIOUS_PENDING_TRADE,
-        STRAT_AUTO_MANAGE_TRADE,
+        symbol_backtest,
+        period_backtest,
+        name_strat,
+        unique_id_backtest,
+        risk,
+        initial_account_balance,
+        time_frame,
+        more_than_on_trade_on_going,
+        delete_previous_pending_trade,
+        strat_auto_manage_trade,
         **kwargs,
     )
 
-    ABSOLUTE_PATH_LAUNCH = Path.cwd()
-    PATH_DATA = (
-        ABSOLUTE_PATH_LAUNCH
+    absolute_path_launch = Path.cwd()
+    path_data = (
+        absolute_path_launch
         / "backtest"
         / "data_candles"
-        / SYMBOL_BACKTEST
-        / NAME_FILE_DATA
+        / symbol_backtest
+        / name_file_data
     )
-    my_backtest.launch_backtest(PATH_DATA)
+    my_backtest.launch_backtest(path_data)
 
 
 class AccountBacktest:
@@ -122,8 +121,8 @@ class Backtest:
         self.unique_id_backtest = unique_id_backtest
         self.account = AccountBacktest(initial_account_balance)
         self.period_backtest = period_backtest
-        PERCENTAGE_CONVERSION = 0.01
-        self.risk_percentage = risk_backtest * PERCENTAGE_CONVERSION
+        percentage_conversion = 0.01
+        self.risk_percentage = risk_backtest * percentage_conversion
         self.max_drawdown = 0
         self.max_drawdown_percentage = 0
         self.time_frame = time_frame
@@ -135,7 +134,7 @@ class Backtest:
         self.kwargs = kwargs
         self.strat_auto_manage_trade = strat_auto_manage_trade
 
-    def launch_backtest(self, path_data: str) -> (float, float):
+    def launch_backtest(self, path_data: Union[Path, str]) -> (float, float):
         """
         launch backtest on the period of time and symbol specified
         Only work for a unique timeframe for now. Work in progress...
@@ -144,14 +143,14 @@ class Backtest:
         data_candles = dict()
         for tf, data_candles_pairs in data_candles_all_tf.items():
             data_candles[tf] = data_candles_pairs[self.symbol]
-        PREVIOUS_BACKTEST_CANDLE_EXISTING = 100
-        DATA = data_candles[self.time_frame]
-        MAX_ITERATOR_BACKTEST = len(DATA.index) - PREVIOUS_BACKTEST_CANDLE_EXISTING
-        progress_bar = FillingCirclesBar("Processing", max=MAX_ITERATOR_BACKTEST + 1)
+        previous_backtest_candle_existing = 100
+        data = data_candles[self.time_frame]
+        max_iterator_backtest = len(data.index) - previous_backtest_candle_existing
+        progress_bar = FillingCirclesBar("Processing", max=max_iterator_backtest + 1)
         data_step_to_process = {}
-        for step_backtest in range(MAX_ITERATOR_BACKTEST + 1):
-            data_step_to_process[f"TF {self.time_frame}"] = DATA.iloc[
-                step_backtest : PREVIOUS_BACKTEST_CANDLE_EXISTING + step_backtest
+        for step_backtest in range(max_iterator_backtest + 1):
+            data_step_to_process[f"TF {self.time_frame}"] = data.iloc[
+                step_backtest: previous_backtest_candle_existing + step_backtest
             ]
             self.launch_strategy(data_step_to_process)
             progress_bar.next()
@@ -160,13 +159,13 @@ class Backtest:
         message = self.create_message()
         print(message)
         self.write_txt(message, self.info_all_trade)
-        return (self.account.balance, self.max_drawdown_percentage)
+        return self.account.balance, self.max_drawdown_percentage
 
     def create_message(self) -> str:
         """
         create a string message with all the info of the backtest
         """
-        ONE_HUNDRED = 100
+        one_hundred = 100
         number_trades = len(self.info_all_trade)
         win_number = 0
         loose_number = 0
@@ -178,7 +177,7 @@ class Backtest:
         if number_trades == 0:
             win_ratio = "Nan"
         else:
-            win_ratio = (round(win_number / (number_trades), 2)) * ONE_HUNDRED
+            win_ratio = (round(win_number / number_trades, 2)) * one_hundred
         message = (
             f"Strategy used: {self.backtest_name}\n"
             f"id backtest used: {self.unique_id_backtest}\n"
@@ -187,21 +186,21 @@ class Backtest:
             f"Times frame used: {self.time_frame}\n"
             f"Initial balance: {self.account.initial_balance}\n"
             f"Balance after backtest: {self.account.balance:.2f}\n"
-            f"Risk taken for each trade: {self.risk_percentage*ONE_HUNDRED}\n"
+            f"Risk taken for each trade: {self.risk_percentage*one_hundred}\n"
             f"Number of trade taken: {number_trades}\n"
             f"Number of wins: {win_number}\n"
             f"Number of looses: {loose_number}\n"
             f"win/loose ratio: {win_ratio} %\n"
             f"Max drawdown: {self.max_drawdown:.2f}\n"
             f"Max drawdown percentage: {self.max_drawdown_percentage:.2f} %\n"
-            f"\n{'-'*ONE_HUNDRED}\n\n"
+            f"\n{'-'*one_hundred}\n\n"
         )
         return message
 
     def write_txt(self, message: str, all_trade_info: Dict):
         """
         save a txt file with all the info of the backtest
-        save a yaml with all trade infos taken on the period of time of the backtest
+        save a yaml with all trades infos taken on the period of time of the backtest
         """
         if not os.path.exists(f"backtest/backtest_by_symbol/{self.symbol}"):
             os.makedirs(f"backtest/backtest_by_symbol/{self.symbol}")
@@ -226,7 +225,7 @@ class Backtest:
             f"backtest/all_trade_backtest/{self.symbol}/{self.backtest_name}.yaml",
             "w",
         ) as yaml_file:
-            yaml_save = yaml.dump(all_trade_info, yaml_file)
+            yaml.dump(all_trade_info, yaml_file)
 
     def check_if_trade_is_on_going(self, trade, last_candle: Candle) -> Dict:
         """
@@ -235,8 +234,8 @@ class Backtest:
         order_type = trade["order_type"]
         if (
             (
-                order_type == mt5.ORDER_TYPE_BUY_LIMIT
-                or order_type == mt5.ORDER_TYPE_SELL_STOP
+                order_type == Mt5.ORDER_TYPE_BUY_LIMIT
+                or order_type == Mt5.ORDER_TYPE_SELL_STOP
             )
             and trade["pending"]
             and not trade["on_going"]
@@ -247,8 +246,8 @@ class Backtest:
                 self.trade_on_going = True
         elif (
             (
-                order_type == mt5.ORDER_TYPE_SELL_LIMIT
-                or order_type == mt5.ORDER_TYPE_BUY_STOP
+                order_type == Mt5.ORDER_TYPE_SELL_LIMIT
+                or order_type == Mt5.ORDER_TYPE_BUY_STOP
             )
             and trade["pending"]
             and not trade["on_going"]
@@ -259,8 +258,9 @@ class Backtest:
                 self.trade_on_going = True
         return trade
 
+    @staticmethod
     def check_if_trade_need_closing(
-        self, trade: Dict, last_candle: Candle
+            trade: Dict, last_candle: Candle
     ) -> (bool, str):
         """
         check if a trade on going is now closed by SL, TP or BE
@@ -269,9 +269,9 @@ class Backtest:
         result_trade = None
         order_type = trade["order_type"]
         if (
-            order_type == mt5.ORDER_TYPE_BUY
-            or order_type == mt5.ORDER_TYPE_BUY_LIMIT
-            or order_type == mt5.ORDER_TYPE_BUY_STOP
+            order_type == Mt5.ORDER_TYPE_BUY
+            or order_type == Mt5.ORDER_TYPE_BUY_LIMIT
+            or order_type == Mt5.ORDER_TYPE_BUY_STOP
         ):
             if last_candle.low < trade["sl"]:
                 trade_closing = True
@@ -280,9 +280,9 @@ class Backtest:
                 trade_closing = True
                 result_trade = "tp"
         elif (
-            order_type == mt5.ORDER_TYPE_SELL
-            or order_type == mt5.ORDER_TYPE_SELL_LIMIT
-            or order_type == mt5.ORDER_TYPE_SELL_STOP
+            order_type == Mt5.ORDER_TYPE_SELL
+            or order_type == Mt5.ORDER_TYPE_SELL_LIMIT
+            or order_type == Mt5.ORDER_TYPE_SELL_STOP
         ):
             if last_candle.high > trade["sl"]:
                 trade_closing = True
@@ -293,14 +293,15 @@ class Backtest:
         return trade_closing, result_trade
 
     def manage_balance_after_trade_closing(
-        self, trade: Dict, result_trade: str, RR: Optional[float]
+        self, trade: Dict, result_trade: str, rr: Optional[float]
     ):
         """
         change the balance depending if the trade is SL, TP or BE
         """
+        new_balance = None
         if result_trade == "tp":
             new_balance = (
-                self.account.balance + self.account.balance * self.risk_percentage * RR
+                self.account.balance + self.account.balance * self.risk_percentage * rr
             ) - (
                 self.account.balance
                 * self.risk_percentage
@@ -336,30 +337,30 @@ class Backtest:
             trade["win"] = False
         return trade
 
-    def check_if_trade_sl_to_be(self, trade: Dict, last_candle: Candle) -> Dict:
+    @staticmethod
+    def check_if_trade_sl_to_be(trade: Dict, last_candle: Candle) -> None:
         """
         check if the trade SL need to be put at BE
         """
         if trade["be"] is None:
-            return trade
+            return None
         order_type = trade["order_type"]
         if (
-            order_type == mt5.ORDER_TYPE_BUY
-            or order_type == mt5.ORDER_TYPE_BUY_LIMIT
-            or order_type == mt5.ORDER_TYPE_BUY_STOP
+            order_type == Mt5.ORDER_TYPE_BUY
+            or order_type == Mt5.ORDER_TYPE_BUY_LIMIT
+            or order_type == Mt5.ORDER_TYPE_BUY_STOP
         ):
             if last_candle.close >= trade["be"]:
                 trade["sl_to_be"] = True
                 trade["sl"] = trade["price"]
         elif (
-            order_type == mt5.ORDER_TYPE_SELL
-            or order_type == mt5.ORDER_TYPE_SELL_LIMIT
-            or order_type == mt5.ORDER_TYPE_SELL_STOP
+            order_type == Mt5.ORDER_TYPE_SELL
+            or order_type == Mt5.ORDER_TYPE_SELL_LIMIT
+            or order_type == Mt5.ORDER_TYPE_SELL_STOP
         ):
             if last_candle.close <= trade["be"]:
                 trade["sl_to_be"] = True
                 trade["sl"] = trade["price"]
-        return trade
 
     def manage_drawdown(self):
         """
@@ -391,7 +392,7 @@ class Backtest:
             if not trade["on_going"]:
                 continue
             if self.strat_auto_manage_trade:
-                if MY_PERSONNAL_BOT:
+                if MY_PERSONAL_BOT:
                     trade, trade_closing, result_trade = manage_personnal_bot(
                         trade, **self.kwargs
                     )
@@ -403,29 +404,29 @@ class Backtest:
                 trade_closing, result_trade = self.check_if_trade_need_closing(
                     trade, last_candle
                 )
-            RR = trade["RR"]
+            rr = trade["RR"]
             if trade_closing:
                 new_balance = self.manage_balance_after_trade_closing(
-                    trade, result_trade, RR
+                    trade, result_trade, rr
                 )
                 trade = self.check_if_trade_is_win(trade, new_balance)
                 self.account.balance = new_balance
                 trade["on_going"] = False
                 self.trade_on_going = False
             elif not self.strat_auto_manage_trade:
-                trade = self.check_if_trade_sl_to_be(trade, last_candle)
+                self.check_if_trade_sl_to_be(trade, last_candle)
             self.manage_drawdown()
 
     def launch_strategy(self, data_step_to_process: dict[str, pd.DataFrame]):
         """
         launch the strategy and manage result of trades
         """
-        DATA_TF = data_step_to_process[f"TF {self.time_frame}"]
-        LAST_CANDLE = Candle(DATA_TF.iloc[-1])
+        data_tf = data_step_to_process[f"TF {self.time_frame}"]
+        last_candle = Candle(data_tf.iloc[-1])
         self.kwargs["backtest_data"] = data_step_to_process
-        self.manage_on_going_trades(LAST_CANDLE)
+        self.manage_on_going_trades(last_candle)
         if not self.trade_on_going or self.more_than_on_trade_on_going:
-            if MY_PERSONNAL_BOT:
+            if MY_PERSONAL_BOT:
                 trade = my_personnal_bot_strategy(**self.kwargs)
             else:
                 trade = bot_strategy(**self.kwargs)
@@ -442,5 +443,5 @@ class Backtest:
                 )
             info_trade_deep_copy = deepcopy(trade)
             self.info_all_trade[
-                str(LAST_CANDLE.date) + str(trade["order_type"])
+                str(last_candle.date) + str(trade["order_type"])
             ] = info_trade_deep_copy

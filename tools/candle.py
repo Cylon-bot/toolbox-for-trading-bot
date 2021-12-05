@@ -11,46 +11,46 @@ __status__ = "Production"
 
 class Candle:
     """
-    class with all the inportant information about the candles you use for your strat
+    class with all the important information about the candles you use for your strat
     """
 
     def __init__(
         self,
         candle_info: pd.DataFrame,
         bollinger_band: bool = False,
-        RSI: bool = False,
+        rsi: bool = False,
         minimum_rejection: Optional[float] = None,
-        EMA_list: Optional[List[int]] = None,
+        ema_list: Optional[List[int]] = None,
         body_min: Optional[float] = None,
-        ID: Optional[int] = None,
+        id_candle: Optional[int] = None,
     ):
 
-        self.ID = ID
+        self.ID = id_candle
         self.open = candle_info["open"]
         self.close = candle_info["close"]
         self.high = candle_info["high"]
         self.low = candle_info["low"]
         self.date = candle_info["time"]
         self.body = self.close - self.open
-        self.EMAs = self.add_EMA_info(candle_info, EMA_list)
+        self.EMAs = self.add_ema_info(candle_info, ema_list)
         self.bullish = self.check_bullish_or_bearish()
         if bollinger_band:
-            self.uper_bollinger = candle_info["uper_bollinger"]
+            self.upper_bollinger = candle_info["upper_bollinger"]
             self.middle_bollinger = candle_info["middle_bollinger"]
             self.lower_bollinger = candle_info["lower_bollinger"]
-        if RSI:
+        if rsi:
             self.RSI = candle_info["RSI"]
-        PIPS = 0.0001
+        pips = 0.0001
         if minimum_rejection is not None:
-            minimum_rejection_PIPS = minimum_rejection * PIPS
+            minimum_rejection_pips = minimum_rejection * pips
             self.high_rejection, self.low_rejection = self.is_rejection_wicks(
-                minimum_rejection_PIPS
+                minimum_rejection_pips
             )
         else:
             self.high_rejection, self.low_rejection = "Unknown", "Unknown"
 
         if body_min is not None and minimum_rejection is not None:
-            body_min_pips = body_min * PIPS
+            body_min_pips = body_min * pips
             self.doji = self.check_doji(body_min_pips)
         else:
             self.doji = "Unknown"
@@ -66,20 +66,21 @@ class Candle:
         else:
             return False
 
-    def add_EMA_info(
-        self, candle_info: pd.DataFrame, EMA_list: Optional[List[int]]
-    ) -> dict[str, int]:
+    @staticmethod
+    def add_ema_info(
+            candle_info: pd.DataFrame, ema_list: Optional[List[int]]
+    ) -> Optional[dict[int, any]]:
         """
         add the info of the EMA to the candle
         """
-        EMAs = dict()
-        if EMA_list is None:
+        emas = dict()
+        if ema_list is None:
             return None
-        for EMA in EMA_list:
-            EMAs[EMA] = candle_info[f"EMA{str(EMA)}"]
-        return EMAs
+        for ema in ema_list:
+            emas[ema] = candle_info[f"EMA{str(ema)}"]
+        return emas
 
-    def check_engulfing(self, previous_candle: "Candle") -> bool:
+    def check_engulfing(self, previous_candle: "Candle"):
         """
         check if the candle is an engulfing candle
         """
@@ -122,13 +123,11 @@ class Candle:
             ):
                 return True, True
             elif (
-                self.high - self.close > minimum_rejection
-                and self.open - self.low < minimum_rejection
+                    self.high - self.close > minimum_rejection > self.open - self.low
             ):
                 return True, False
             elif (
-                self.high - self.close < minimum_rejection
-                and self.open - self.low > minimum_rejection
+                    self.high - self.close < minimum_rejection < self.open - self.low
             ):
                 return False, True
             else:
@@ -140,13 +139,11 @@ class Candle:
             ):
                 return True, True
             elif (
-                self.high - self.open > minimum_rejection
-                and self.close - self.low < minimum_rejection
+                    self.high - self.open > minimum_rejection > self.close - self.low
             ):
                 return True, False
             elif (
-                self.high - self.open < minimum_rejection
-                and self.close - self.low > minimum_rejection
+                    self.high - self.open < minimum_rejection < self.close - self.low
             ):
                 return False, True
             else:
@@ -156,15 +153,15 @@ class Candle:
         """
         print all the details of the candle for the user --> need refactoring (use __str__ instead)
         """
-        PIPS = 0.0001
-        PIPS_INVERSE = 1 / PIPS
+        pips = 0.0001
+        pips_inverse = 1 / pips
         message = (
             f"Candle: {self.date}\n"
             f"Open: {self.open}\n"
             f"Close: {self.close}\n"
             f"High: {self.high}\n"
             f"Low: {self.low}\n"
-            f"body: {round(self.body*PIPS_INVERSE,2)} Pips\n"
+            f"body: {round(self.body*pips_inverse,2)} Pips\n"
             f"doji: {self.doji}\n"
             f"EMA: {self.EMAs}\n"
             f"Bullish: {self.bullish}\n"

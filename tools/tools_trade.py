@@ -1,8 +1,7 @@
 import pytz
 from datetime import datetime, timedelta
-import MetaTrader5 as mt5
+import MetaTrader5 as Mt5
 import pandas as pd
-import sys
 from typing import Dict, List, Optional
 from copy import deepcopy
 from account import Account
@@ -28,17 +27,17 @@ def calc_lot_forex(
     """
     calc lot size for forex
     """
-    PERCENTAGE_CONVERTER = 0.01
-    RISK_PERCENTAGE = risk * PERCENTAGE_CONVERTER
-    CURRENCY_2 = symbol[3:6]
-    if CURRENCY_2 == "JPY":
-        JPY_PIP_CONVERTER = 100
-        PIP_VALUE = (balance * RISK_PERCENTAGE) / (sl * JPY_PIP_CONVERTER)
+    percentage_converter = 0.01
+    risk_percentage = risk * percentage_converter
+    currency_2 = symbol[3:6]
+    if currency_2 == "jpy":
+        jpy_pip_converter = 100
+        pip_value = (balance * risk_percentage) / (sl * jpy_pip_converter)
     else:
-        PIP_VALUE = (balance * RISK_PERCENTAGE) / sl
-    ONE_LOT_PRICE = 100_000
-    lot_calcul = (PIP_VALUE / ONE_LOT_PRICE) * (account_currency_conversion)
-    lot_size = round(lot_calcul, 2)
+        pip_value = (balance * risk_percentage) / sl
+    one_lot_price = 100_000
+    calculate_lot = (pip_value / one_lot_price) * account_currency_conversion
+    lot_size = round(calculate_lot, 2)
     return lot_size
 
 
@@ -48,19 +47,19 @@ def calc_account_currency_conversion(
     """
     calculate the price conversion between the traded symbol and your account currency
     """
-    CURRENCY_2 = symbol[3:6]
-    OTHER_CHARACTER = symbol[6:]
-    if account_currency == CURRENCY_2:
+    currency_2 = symbol[3:6]
+    other_character = symbol[6:]
+    if account_currency == currency_2:
         account_currency_conversion = 1
     else:
-        symbol_to_convert = account_currency + CURRENCY_2 + OTHER_CHARACTER
+        symbol_to_convert = account_currency + currency_2 + other_character
         symbol_is_real = check_symbol(symbol_to_convert)
         if symbol_is_real:
             account_currency_conversion = float(
                 current_price_symbols[symbol_to_convert]["close"]
             )
         else:
-            symbol_to_convert = CURRENCY_2 + account_currency + OTHER_CHARACTER
+            symbol_to_convert = currency_2 + account_currency + other_character
             symbol_is_real = check_symbol(symbol_to_convert)
             if symbol_is_real:
                 account_currency_conversion = 1 / float(
@@ -68,7 +67,7 @@ def calc_account_currency_conversion(
                 )
             else:
                 print(
-                    f"unable to find a lot for {CURRENCY_2 + account_currency + OTHER_CHARACTER}"
+                    f"unable to find a lot for {currency_2 + account_currency + other_character}"
                 )
                 return None
     return account_currency_conversion
@@ -80,17 +79,16 @@ def calc_position_size_forex(
     risk: float,
     sl: float,
     current_price_symbols: dict,
-    account: Account,
 ) -> Optional[float]:
     """
     return lot size for forex
     """
-    ACCOUNT = mt5.account_info()
-    BALANCE = ACCOUNT.balance
+    account = Mt5.account_info()
+    balance = account.balance
     account_currency_conversion = calc_account_currency_conversion(
         account_currency, symbol, current_price_symbols
     )
-    lot_size = calc_lot_forex(risk, symbol, sl, BALANCE, account_currency_conversion)
+    lot_size = calc_lot_forex(risk, symbol, sl, balance, account_currency_conversion)
     return lot_size
 
 
@@ -101,7 +99,7 @@ def get_order_history(
     """
     get history of trades from the connected account
     """
-    res = mt5.history_deals_get(date_from, date_to)
+    res = Mt5.history_deals_get(date_from, date_to)
     if res is not None and res != ():
         df = pd.DataFrame(list(res), columns=res[0]._asdict().keys())
         df["time"] = pd.to_datetime(df["time"], unit="s")
@@ -130,7 +128,7 @@ def calc_daily_lost_trades():
         return lost_trade_count
 
 
-def get_daily_trade_data() -> "history_order":
+def get_daily_trade_data():
     """
     calculate the daily lost trades
     """
@@ -147,10 +145,10 @@ def check_max_drawdown(
     """
     check if the loss exceed the max given drawdown
     """
-    PERCENTAGE = 0.01
-    MAX_DRAWDOWN_PERCENTAGE = max_drawdown * PERCENTAGE
+    percentage = 0.01
+    max_drawdown_percentage = max_drawdown * percentage
     is_in_drawdown = False
-    if current_balance < (initial_balance - initial_balance * MAX_DRAWDOWN_PERCENTAGE):
+    if current_balance < (initial_balance - initial_balance * max_drawdown_percentage):
         is_in_drawdown = True
 
     return is_in_drawdown
@@ -161,9 +159,9 @@ def positions_get(symbol=None) -> pd.DataFrame:
     return all on going positions
     """
     if symbol is None:
-        res = mt5.positions_get()
+        res = Mt5.positions_get()
     else:
-        res = mt5.positions_get(symbol=symbol)
+        res = Mt5.positions_get(symbol=symbol)
     if res is not None and res != ():
         df = pd.DataFrame(list(res), columns=res[0]._asdict().keys())
         df["time"] = pd.to_datetime(df["time"], unit="s")
@@ -194,12 +192,12 @@ def check_symbol(pair: str):
     """
     check if the symbol given by the user exist in the broker trading list
     """
-    symbol_info = mt5.symbol_info(pair)
+    symbol_info = Mt5.symbol_info(pair)
     if symbol_info is None:
         return False
 
     if not symbol_info.visible:
-        if not mt5.symbol_select(pair, True):
+        if not Mt5.symbol_select(pair, True):
             return False
     return True
 
@@ -207,31 +205,33 @@ def check_symbol(pair: str):
 def recup_all_symbol_conversion(
     path_symbol_broker: str = "symbol_broker.yaml",
 ) -> Dict[str, List[str]]:
-    ABSOLUTE_PATH_LAUNCH = Path.cwd()
-    SYMBOL_BROKER_PATH = ABSOLUTE_PATH_LAUNCH / path_symbol_broker
-    with open(SYMBOL_BROKER_PATH) as symbol_broker_file:
+    absolute_path_launch = Path.cwd()
+    symbol_broker_path = absolute_path_launch / path_symbol_broker
+    with open(symbol_broker_path) as symbol_broker_file:
         symbol_broker_yaml = yaml.load(symbol_broker_file, Loader=yaml.FullLoader)
     return symbol_broker_yaml
 
 
 def close_one_trade_on_going(trade: pd.Series):
+    order_type_close = None
+    price_close = None
     if (
-        trade["type"] == mt5.ORDER_TYPE_BUY
-        or trade["type"] == mt5.ORDER_TYPE_BUY_STOP
-        or trade["type"] == mt5.ORDER_TYPE_BUY_LIMIT
+        trade["type"] == Mt5.ORDER_TYPE_BUY
+        or trade["type"] == Mt5.ORDER_TYPE_BUY_STOP
+        or trade["type"] == Mt5.ORDER_TYPE_BUY_LIMIT
     ):
-        order_type_close = mt5.ORDER_TYPE_SELL
-        price_close = mt5.symbol_info_tick(trade["symbol"]).bid
+        order_type_close = Mt5.ORDER_TYPE_SELL
+        price_close = Mt5.symbol_info_tick(trade["symbol"]).bid
     elif (
-        trade["type"] == mt5.ORDER_TYPE_SELL
-        or trade["type"] == mt5.ORDER_TYPE_SELL_STOP
-        or trade["type"] == mt5.ORDER_TYPE_SELL_LIMIT
+        trade["type"] == Mt5.ORDER_TYPE_SELL
+        or trade["type"] == Mt5.ORDER_TYPE_SELL_STOP
+        or trade["type"] == Mt5.ORDER_TYPE_SELL_LIMIT
     ):
-        order_type_close = mt5.ORDER_TYPE_BUY
-        price_close = mt5.symbol_info_tick(trade["symbol"]).ask
+        order_type_close = Mt5.ORDER_TYPE_BUY
+        price_close = Mt5.symbol_info_tick(trade["symbol"]).ask
     volume_to_close = float(trade["volume"])
     close_request = {
-        "action": mt5.TRADE_ACTION_DEAL,
+        "action": Mt5.TRADE_ACTION_DEAL,
         "symbol": trade["symbol"],
         "volume": volume_to_close,
         "type": order_type_close,
@@ -240,20 +240,20 @@ def close_one_trade_on_going(trade: pd.Series):
         "magic": 5430,
         "deviation": 50,
         "comment": f"Close from robot",
-        "type_time": mt5.ORDER_TIME_GTC,
-        "type_filling": mt5.ORDER_FILLING_IOC,
+        "type_time": Mt5.ORDER_TIME_GTC,
+        "type_filling": Mt5.ORDER_FILLING_IOC,
     }
-    result_close_request = mt5.order_send(close_request)
+    result_close_request = Mt5.order_send(close_request)
     while result_close_request.comment == "Requote":
-        if order_type_close == mt5.ORDER_TYPE_BUY:
-            price_close = mt5.symbol_info_tick(trade["symbol"]).ask
+        if order_type_close == Mt5.ORDER_TYPE_BUY:
+            price_close = Mt5.symbol_info_tick(trade["symbol"]).ask
             close_request["price"] = price_close
-        elif order_type_close == mt5.ORDER_TYPE_SELL:
-            price_close = mt5.symbol_info_tick(trade["symbol"]).bid
+        elif order_type_close == Mt5.ORDER_TYPE_SELL:
+            price_close = Mt5.symbol_info_tick(trade["symbol"]).bid
             close_request["price"] = price_close
-        result_close_request = mt5.order_send(close_request)
+        result_close_request = Mt5.order_send(close_request)
 
-    if result_close_request.retcode != mt5.TRADE_RETCODE_DONE:
+    if result_close_request.retcode != Mt5.TRADE_RETCODE_DONE:
         print(result_close_request)
         print("Failed to close order :(")
         return False
@@ -271,30 +271,30 @@ def move_sl_to_be(trade, decal_sl_be: float):
     trade_comment = trade.comment
     trade_order_type = trade.type
     if (
-        trade_order_type == mt5.ORDER_TYPE_SELL_LIMIT
-        or trade_order_type == mt5.ORDER_TYPE_SELL
-        or trade_order_type == mt5.ORDER_TYPE_SELL_STOP
+        trade_order_type == Mt5.ORDER_TYPE_SELL_LIMIT
+        or trade_order_type == Mt5.ORDER_TYPE_SELL
+        or trade_order_type == Mt5.ORDER_TYPE_SELL_STOP
     ):
         decal_sl_be = -decal_sl_be
 
     if float(stop_loss_trade) != float(entering_price + decal_sl_be):
         modify_request = {
-            "action": mt5.TRADE_ACTION_SLTP,
+            "action": Mt5.TRADE_ACTION_SLTP,
             "symbol": symbol,
             "sl": entering_price + decal_sl_be,
             "position": int(ticket),
             "tp": take_profit_trade,
             "comment": trade_comment,
         }
-        result_modify_request = mt5.order_send(modify_request)
-        if result_modify_request.retcode != mt5.TRADE_RETCODE_DONE:
+        result_modify_request = Mt5.order_send(modify_request)
+        if result_modify_request.retcode != Mt5.TRADE_RETCODE_DONE:
             print(
                 f"Failed to modify order :(, retcode: {result_modify_request.retcode}"
             )
             print(colored(result_modify_request, "blue"))
         else:
             print(colored(f"\n{'-'*100}\n", "blue"))
-            print(colored(f"succesfully place SL to BE for trade :", "green"))
+            print(colored(f"successfully place SL to BE for trade :", "green"))
 
             for key, value in trade.to_dict().items():
                 print(colored(f"{key} : {value}", "green"))

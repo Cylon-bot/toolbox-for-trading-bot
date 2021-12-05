@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
-import MetaTrader5 as mt5
+import MetaTrader5 as Mt5
 import pandas as pd
 from typing import List, Dict, Optional, Union
-import os
 from pathlib import Path
 import pickle as pck
 import pytz
@@ -21,14 +20,14 @@ def get_data(
     time_frame: int,
     utc_from: datetime,
     date_to: datetime,
-    EMA_list: Optional[List[int]] = None,
+    ema_list: Optional[List[int]] = None,
     backtest: bool = False,
     backtest_data: Optional[pd.DataFrame] = None,
     bollinger_band: bool = False,
-    RSI: bool = False,
+    rsi: bool = False,
 ) -> Dict[str, pd.DataFrame]:
     """
-    ask to the mt5 server for the data and add any specified indicator from talib librarie
+    ask to the mt5 server for the data and add any specified indicator from ta-lib libraries
     indicator implemented at the moment :
 
         - EMA
@@ -44,7 +43,7 @@ def get_data(
                 hour=date_to.hour,
                 minute=date_to.minute,
             )
-            rates = mt5.copy_rates_range(pair, time_frame, utc_from, date_to)
+            rates = Mt5.copy_rates_range(pair, time_frame, utc_from, date_to)
             rates_frame = pd.DataFrame(rates)
             rates_frame["time"] = pd.to_datetime(rates_frame["time"], unit="s")
             rates_frame.drop(rates_frame.tail(1).index, inplace=True)
@@ -52,39 +51,39 @@ def get_data(
     else:
         pair_data = backtest_data[f"TF {time_frame}"]
 
-    if EMA_list is not None:
-        for EMA in EMA_list:
-            pair_data = add_EMA_to_data(pair_data, backtest=backtest, EMA=EMA)
+    if ema_list is not None:
+        for ema in ema_list:
+            pair_data = add_ema_to_data(pair_data, backtest=backtest, ema=ema)
     if bollinger_band:
         pair_data = add_bollinger_to_data(pair_data, backtest=backtest)
 
-    if RSI:
+    if rsi:
         pair_data = add_rsi_to_data(pair_data, backtest=backtest)
     return pair_data
 
 
-def get_time_frame_needed(TF: int = mt5.TIMEFRAME_M1) -> Dict[int, datetime]:
+def get_time_frame_needed(tf: int = Mt5.TIMEFRAME_M1) -> Dict[int, datetime]:
     """
-    return three day of candles in a specifie TF
+    return three day of candles in a specified TF
     """
     now = datetime.now().astimezone(pytz.timezone("Etc/GMT-5"))
     now = datetime(now.year, now.month, now.day, hour=now.hour, minute=now.minute)
     three_day = now - timedelta(hours=72)
-    TF_FROM_DATE = {TF: three_day}
-    return TF_FROM_DATE
+    tf_from_date = {tf: three_day}
+    return tf_from_date
 
 
 def return_datas(
     symbols: List[str],
-    TF_list: list[int],
+    tf_list: list[int],
     datas_for_lot: bool,
-    EMA_list: Optional[List[int]] = None,
+    ema_list: Optional[List[int]] = None,
     backtest_data: Optional[pd.DataFrame] = None,
     bollinger_band: bool = False,
-    RSI: bool = False,
+    rsi: bool = False,
 ) -> Union[Dict[int, Dict[str, pd.DataFrame]], Dict[str, pd.DataFrame]]:
     """
-    return datas candles with specifie information. If we need to return
+    return datas candles with specified information. If we need to return
     information for size lot it will only be the last candle.
     """
     if backtest_data is not None:
@@ -93,19 +92,19 @@ def return_datas(
         backtest = False
     data_candles_all_tf = dict()
     date_to = datetime.now().astimezone(pytz.timezone("Etc/GMT-5"))
-    for TF in TF_list:
-        TF_FROM_DATE = get_time_frame_needed(TF)
-        for time_frame, from_date in TF_FROM_DATE.items():
+    for TF in tf_list:
+        tf_from_date = get_time_frame_needed(TF)
+        for time_frame, from_date in tf_from_date.items():
             data_candles_all_tf[time_frame] = get_data(
                 symbols,
                 time_frame,
                 from_date,
                 date_to,
-                EMA_list,
+                ema_list,
                 backtest,
                 backtest_data,
                 bollinger_band,
-                RSI,
+                rsi,
             )
     if datas_for_lot:
         last_row_lot_all_pair = dict()
@@ -118,21 +117,21 @@ def return_datas(
         return data_candles_all_tf
 
 
-def add_EMA_to_data(
-    data_candles_all_tf: dict, backtest: bool = False, EMA: int = 50
+def add_ema_to_data(
+    data_candles_all_tf: dict, backtest: bool = False, ema: int = 50
 ) -> Dict[str, pd.DataFrame]:
     """
     add specified EMA to data candles
     """
-    STRING_EMA = str(EMA)
+    string_ema = str(ema)
     if backtest:
-        data_candles_all_tf["EMA" + STRING_EMA] = ta.EMA(
-            data_candles_all_tf["close"], EMA
+        data_candles_all_tf["EMA" + string_ema] = ta.EMA(
+            data_candles_all_tf["close"], ema
         )
 
     else:
         for pair, pair_data in data_candles_all_tf.items():
-            pair_data["EMA" + STRING_EMA] = ta.EMA(pair_data["close"], EMA)
+            pair_data["EMA" + string_ema] = ta.EMA(pair_data["close"], ema)
     return data_candles_all_tf
 
 
@@ -142,7 +141,7 @@ def add_bollinger_to_data(data_candles_all_tf: dict, backtest: bool = False):
     """
     if backtest:
         (
-            data_candles_all_tf["uper_bollinger"],
+            data_candles_all_tf["upper_bollinger"],
             data_candles_all_tf["middle_bollinger"],
             data_candles_all_tf["lower_bollinger"],
         ) = ta.BBANDS(
@@ -156,7 +155,7 @@ def add_bollinger_to_data(data_candles_all_tf: dict, backtest: bool = False):
     else:
         for pair, pair_data in data_candles_all_tf.items():
             (
-                pair_data["uper_bollinger"],
+                pair_data["upper_bollinger"],
                 pair_data["middle_bollinger"],
                 pair_data["lower_bollinger"],
             ) = ta.BBANDS(
@@ -178,23 +177,23 @@ def add_rsi_to_data(
     if backtest:
         data_candles_all_tf["RSI"] = ta.RSI(
             data_candles_all_tf["close"],
-            timeperiod=14,
+            timeperiod=time_period,
         )
     else:
         for pair, pair_data in data_candles_all_tf.items():
             pair_data["RSI"] = ta.RSI(
                 pair_data["close"],
-                timeperiod=14,
+                timeperiod=time_period,
             )
     return data_candles_all_tf
 
 
-def save_data(DATA: Dict[str, pd.DataFrame], PATH_OUTPUT: Path):
+def save_data(data: Dict[str, pd.DataFrame], path_output: Path):
     """
     Export pandas data to a file with pickle.
     """
-    with open(PATH_OUTPUT, "wb") as file:
-        pck.dump(DATA, file)
+    with open(path_output, "wb") as file:
+        pck.dump(data, file)
 
 
 def load_data(path_output: Path):
