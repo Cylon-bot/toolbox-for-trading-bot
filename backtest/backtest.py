@@ -7,14 +7,13 @@ import pandas as pd
 from copy import deepcopy
 from tools.market_data import load_data
 from tools.candle import Candle
-from bot_strat import bot_strategy, manage_bot
+
 from pathlib import Path
 
 try:
     from personal_bot import my_personal_bot_strategy as bot_strategy, manage_personal_bot as manage_bot_strategy
 except ImportError:
-    bot_strategy = bot_strategy()
-    manage_bot_strategy = manage_bot()
+    from bot_strat import bot_strategy, manage_bot
 
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"

@@ -1,15 +1,13 @@
 import click
 from termcolor import colored
-from backtest.backtest import create_backtest
+
 from bot_strat import live_trading
 from typing import List
 
 try:
-    from backtest.my_personnal_backtest import create_personnal_backtest
-
-    PERSONNAL_BACKTEST = True
-except:
-    PERSONNAL_BACKTEST = False
+    from backtest.my_personnal_backtest import create_personnal_backtest as create_backtest
+except ImportError:
+    from backtest.backtest import create_backtest
 
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
@@ -53,10 +51,7 @@ def main(
 
         live_trading(account_currency, risk, symbols)
     elif action == "backtest":
-        if PERSONNAL_BACKTEST:
-            create_personnal_backtest()
-        else:
-            create_backtest()
+        create_backtest()
     else:
         print(colored("No action with that name", "red"))
 

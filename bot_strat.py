@@ -18,10 +18,10 @@ import yaml
 from pathlib import Path
 
 try:
-    from personal_bot import live_trading_personnal_strat as live_trading_strat
+    from personal_bot import live_trading_personnal_strat as bot_strategy
+    PERSONAL_BOT = True
 except ImportError:
-    live_trading_strat = live_trading_strat
-
+    PERSONAL_BOT = False
 
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
@@ -47,21 +47,22 @@ def bot_strategy(
 
     # NB1 : use Account class to pass attribute to the next iteration of this function (don't hesitate to create attribute inside init in Account class)
     # NB2 : Backtest only work with a unique TF for now. Works in progress
-    DATA = return_datas(
+    data = return_datas(
         [symbol], tf_list, False, ema_list, backtest_data, bollinger_band
     )
+    account_currency_conversion = None
     if backtest_data is None:
         symbol_broker_yaml = recup_all_symbol_conversion()
         account_currency_conversion = return_datas(
             symbol_broker_yaml["calcul_for_lot"], [Mt5.TIMEFRAME_M1], True
         )
-        DATA_TF_1 = DATA[tf_list[0]][symbol]
+        data_tf_1 = data[tf_list[0]][symbol]
     else:
-        DATA_TF_1 = DATA[tf_list[0]]
+        data_tf_1 = data[tf_list[0]]
 
     pips = 0.0001
     micro_pips = 0.00001
-    last_candle_first_tf = Candle(DATA_TF_1.iloc[-1], ema_list=ema_list)
+    last_candle_first_tf = Candle(data_tf_1.iloc[-1], ema_list=ema_list)
 
     # if you want your bot to trade only between 9H and 17H for (UTC+2)-PARIS but 8 and 16 on mt5)
     last_candle_hour = last_candle_first_tf.date.hour
@@ -72,22 +73,23 @@ def bot_strategy(
     ###### Manage bot ######
     ########################
 
+    trade_open = None
     if backtest_data is None:
-        trade_open = manage_bot(last_candle_first_tf, None)
+        trade_open = manage_bot()
 
     #######################
     ###### Bot strat ######
     #######################
     price = None
     size = None
-    if last_candle_first_tf.close > last_candle_first_tf.emas[ema_list[0]]:
+    if last_candle_first_tf.close > last_candle_first_tf.EMAs[ema_list[0]]:
         sl = last_candle_first_tf.close - 3 * pips
         tp = last_candle_first_tf.close + 6 * pips
-        order_type = Mt5.order_type_buy
-    elif last_candle_first_tf.close < last_candle_first_tf.emas[ema_list[0]]:
+        order_type = Mt5.ORDER_TYPE_BUY
+    elif last_candle_first_tf.close < last_candle_first_tf.EMAs[ema_list[0]]:
         sl = last_candle_first_tf.close + 3 * pips
         tp = last_candle_first_tf.close - 6 * pips
-        order_type = Mt5.order_type_sell
+        order_type = Mt5.ORDER_TYPE_SELL
     else:
         return None
     comment = "my_bot_trade"
@@ -143,7 +145,7 @@ def take_trade(
         sl: Optional[float],
         size: Optional[float],
         comment: str,
-        lot_all_pair: pd.DataFrame
+        lot_all_pair: Dict[str, pd.DataFrame]
 ):
     """
     create a new trade and open it
@@ -196,8 +198,8 @@ def live_trading(account_currency: str, risk: float, symbols: List[str]):
     """
     launch the bot every minute
     """
-    if MY_PERSONNAL_BOT:
-        live_trading_personnal_strat(account_currency, risk, symbols)
+    if PERSONAL_BOT:
+        bot_strategy(account_currency, risk, symbols)
     else:
         my_account = Account(
             account_currency=account_currency,
