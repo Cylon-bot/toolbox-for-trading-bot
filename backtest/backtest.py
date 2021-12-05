@@ -11,7 +11,7 @@ from tools.candle import Candle
 from pathlib import Path
 
 try:
-    from personal_bot import my_personal_bot_strategy as bot_strategy, manage_personal_bot as manage_bot_strategy
+    from personal_bot import my_personal_bot_strategy as bot_strategy, manage_personal_bot as manage_bot
 except ImportError:
     from bot_strat import bot_strategy, manage_bot
 
@@ -391,12 +391,7 @@ class Backtest:
             if not trade["on_going"]:
                 continue
             if self.strat_auto_manage_trade:
-                if MY_PERSONAL_BOT:
-                    trade, trade_closing, result_trade = manage_personnal_bot(
-                        trade, **self.kwargs
-                    )
-                else:
-                    trade, trade_closing, result_trade = manage_bot(
+                trade, trade_closing, result_trade = manage_bot(
                         trade, **self.kwargs
                     )
             else:
@@ -425,10 +420,7 @@ class Backtest:
         self.kwargs["backtest_data"] = data_step_to_process
         self.manage_on_going_trades(last_candle)
         if not self.trade_on_going or self.more_than_on_trade_on_going:
-            if MY_PERSONAL_BOT:
-                trade = my_personnal_bot_strategy(**self.kwargs)
-            else:
-                trade = bot_strategy(**self.kwargs)
+            trade = bot_strategy(**self.kwargs)
         else:
             trade = None
         if trade is not None:
