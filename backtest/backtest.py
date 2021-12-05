@@ -53,8 +53,8 @@ def create_backtest():
     kwargs = {
         "symbol": "EURUSD",
         "risk": risk,
-        "TF_list": [time_frame],
-        "EMA_list": [25, 50],
+        "tf_list": [time_frame],
+        "ema_list": [25, 50],
     }
 
     # Normally you don't have to modify this part
