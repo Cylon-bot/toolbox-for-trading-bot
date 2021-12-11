@@ -1,5 +1,5 @@
 import MetaTrader5 as Mt5
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, List
 from progress.bar import FillingCirclesBar
 import yaml
 import os
@@ -109,7 +109,7 @@ class Backtest:
         unique_id_backtest: str,
         risk_backtest: float,
         initial_account_balance: float,
-        time_frame: int,
+        time_frames: List[int],
         more_than_on_trade_on_going: bool,
         delete_previous_pending_trade: bool,
         strat_auto_manage_trade: bool,
@@ -124,7 +124,7 @@ class Backtest:
         self.risk_percentage = risk_backtest * percentage_conversion
         self.max_drawdown = 0
         self.max_drawdown_percentage = 0
-        self.time_frame = time_frame
+        self.time_frames = time_frames
         self.info_trade = None
         self.info_all_trade = {}
         self.delete_previous_pending_trade = delete_previous_pending_trade
@@ -143,14 +143,48 @@ class Backtest:
         for tf, data_candles_pairs in data_candles_all_tf.items():
             data_candles[tf] = data_candles_pairs[self.symbol]
         previous_backtest_candle_existing = 100
-        data = data_candles[self.time_frame]
-        max_iterator_backtest = len(data.index) - previous_backtest_candle_existing
+        data = {}
+        interval_time_frame = {}
+        for time_frame in self.time_frames:
+            data[time_frame] = data_candles[time_frame]
+            interval_time_frame[time_frame] = data[time_frame]["time"][1] - data[time_frame]["time"][0]
+        max_iterator_backtest = len(data[1].index) - previous_backtest_candle_existing
         progress_bar = FillingCirclesBar("Processing", max=max_iterator_backtest + 1)
         data_step_to_process = {}
+        begin_date_first_tf = None
+        end_date_first_tf = None
         for step_backtest in range(max_iterator_backtest + 1):
-            data_step_to_process[f"TF {self.time_frame}"] = data.iloc[
-                step_backtest: previous_backtest_candle_existing + step_backtest
-            ]
+            for rank, time_frame in enumerate(self.time_frames):
+                if rank == 0:
+                    data_step_to_process[f"TF {time_frame}"] = data[time_frame].iloc[
+                        step_backtest: previous_backtest_candle_existing + step_backtest
+                    ]
+                    begin_date_first_tf = data_step_to_process[f"TF {time_frame}"].iloc[0]["time"]
+                    end_date_first_tf = data_step_to_process[f"TF {time_frame}"].iloc[-1]["time"]
+                else:
+                    find_begin_date = False
+                    find_end_date = False
+                    previous_date = None
+                    begin_line_other_tf = None
+                    end_line_other_tf = None
+                    for iterator, date in enumerate(data[time_frame]["time"]):
+                        if iterator == 0:
+                            previous_date = date
+                        if date > begin_date_first_tf - interval_time_frame[time_frame] and not find_begin_date:
+                            find_begin_date = True
+                            if (int(begin_date_first_tf.minute)+1) % int(int(interval_time_frame[time_frame].seconds)/60) == 0:
+                                begin_line_other_tf = date
+                            else:
+                                begin_line_other_tf = previous_date
+                        if date > end_date_first_tf - interval_time_frame[time_frame] and not find_end_date:
+                            find_end_date = True
+                            if (int(end_date_first_tf.minute)+1) % int(int(interval_time_frame[time_frame].seconds)/60) == 0:
+                                end_line_other_tf = date
+                            else:
+                                end_line_other_tf = previous_date
+                        previous_date = date
+                    data_step_to_process[f"TF {time_frame}"] = data[time_frame].loc[(data[time_frame]['time'] >= begin_line_other_tf) & (data[time_frame]['time'] <= end_line_other_tf)]
+
             self.launch_strategy(data_step_to_process)
             progress_bar.next()
 
@@ -182,7 +216,7 @@ class Backtest:
             f"id backtest used: {self.unique_id_backtest}\n"
             f"Symbol Backtested: {self.symbol}\n"
             f"Period Backtested: {self.period_backtest}\n"
-            f"Times frame used: {self.time_frame}\n"
+            f"Times frame used: {self.time_frames}\n"
             f"Initial balance: {self.account.initial_balance}\n"
             f"Balance after backtest: {self.account.balance:.2f}\n"
             f"Risk taken for each trade: {self.risk_percentage*one_hundred}\n"
@@ -415,8 +449,8 @@ class Backtest:
         """
         launch the strategy and manage result of trades
         """
-        data_tf = data_step_to_process[f"TF {self.time_frame}"]
-        last_candle = Candle(data_tf.iloc[-1])
+        data_tf_1 = data_step_to_process[f"TF {self.time_frames[0]}"]
+        last_candle = Candle(data_tf_1.iloc[-1])
         self.kwargs["backtest_data"] = data_step_to_process
         self.manage_on_going_trades(last_candle)
         if not self.trade_on_going or self.more_than_on_trade_on_going:
