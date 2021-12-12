@@ -14,12 +14,12 @@ from tools.candle import Candle
 from pathlib import Path
 
 try:
-    from personal_bot import (
-        my_personal_bot_strategy as bot_strategy,
-        manage_personal_bot as manage_bot,
+    from strat.smart_money import (
+        smart_money_strat as bot_strategy,
+        manage_smart_money as manage_bot,
     )
 except ImportError:
-    from bot_strat import bot_strategy, manage_bot
+    from strat.bot_strat import bot_strategy, manage_bot
 
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
@@ -149,7 +149,7 @@ class Backtest:
         data_candles = dict()
         for tf, data_candles_pairs in data_candles_all_tf.items():
             data_candles[tf] = data_candles_pairs[self.symbol]
-        previous_backtest_candle_existing = 100
+        previous_backtest_candle_existing = 1500
         data = {}
         interval_time_frame = {}
         for time_frame in self.time_frames:
@@ -164,6 +164,7 @@ class Backtest:
         end_date_first_tf = None
         for step_backtest in range(max_iterator_backtest + 1):
             for rank, time_frame in enumerate(self.time_frames):
+
                 if rank == 0:
                     data_step_to_process[f"TF {time_frame}"] = data[time_frame].iloc[
                         step_backtest: previous_backtest_candle_existing
@@ -189,7 +190,8 @@ class Backtest:
                             and not find_begin_date
                         ):
                             find_begin_date = True
-                            if (int(begin_date_first_tf.minute) + 1) % int(
+                            minute_first_tf_synchro = int(begin_date_first_tf.minute) + 1
+                            if minute_first_tf_synchro % int(
                                 int(interval_time_frame[time_frame].seconds) / 60
                             ) == 0:
                                 begin_line_other_tf = date
@@ -200,7 +202,8 @@ class Backtest:
                             and not find_end_date
                         ):
                             find_end_date = True
-                            if (int(end_date_first_tf.minute) + 1) % int(
+                            minute_first_tf_synchro = int(end_date_first_tf.minute) + 1
+                            if minute_first_tf_synchro % int(
                                 int(interval_time_frame[time_frame].seconds) / 60
                             ) == 0:
                                 end_line_other_tf = date

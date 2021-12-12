@@ -1,9 +1,9 @@
+from typing import List
+
 import click
 from termcolor import colored
 
-from bot_strat import live_trading
-from typing import List
-
+from strat.bot_strat import live_trading
 try:
     from backtest.my_personal_backtest import (
         create_personal_backtest as create_backtest,

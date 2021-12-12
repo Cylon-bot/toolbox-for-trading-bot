@@ -1,7 +1,8 @@
+from typing import List, Dict, Optional, Union
 from datetime import datetime, timedelta
+
 import MetaTrader5 as Mt5
 import pandas as pd
-from typing import List, Dict, Optional, Union
 from pathlib import Path
 import pickle as pck
 import pytz

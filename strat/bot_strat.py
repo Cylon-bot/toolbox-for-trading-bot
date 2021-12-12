@@ -1,25 +1,18 @@
-import MetaTrader5 as Mt5
-from termcolor import colored
 from typing import List, Optional, Union, Dict
-import pandas as pd
-from tools.market_data import return_datas
-from tools.tools_trade import (
-    positions_get,
-    recup_all_symbol_conversion,
-    close_one_trade_on_going,
-)
-from account import Account
-from tools.candle import Candle
-from random import choice
-from trade import Trade
-import schedule
 import time
-import yaml
-from pathlib import Path
+
+import MetaTrader5 as Mt5
+import pandas as pd
+import schedule
+
+from tools.market_data import return_datas
+from tools.tools_trade import (positions_get, recup_all_symbol_conversion)
+from mt5_connector.account import Account
+from tools.candle import Candle
+from mt5_connector.trade import Trade
 
 try:
-    from personal_bot import live_trading_personnal_strat as bot_strategy
-
+    from strat.smart_money import live_trading_smart_money as bot_strategy
     PERSONAL_BOT = True
 except ImportError:
     PERSONAL_BOT = False

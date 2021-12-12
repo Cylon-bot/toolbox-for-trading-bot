@@ -4,7 +4,7 @@ import MetaTrader5 as Mt5
 from pandas import DataFrame
 from termcolor import colored
 
-from account import Account
+from mt5_connector.account import Account
 from tools.tools_trade import (
     calc_position_size_forex,
     get_order_history,

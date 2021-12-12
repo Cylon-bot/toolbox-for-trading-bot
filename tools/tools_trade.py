@@ -1,14 +1,15 @@
+from typing import Dict, List, Optional
+from copy import deepcopy
+
 import pytz
 from datetime import datetime, timedelta
 import MetaTrader5 as Mt5
 import pandas as pd
-from typing import Dict, List, Optional
-from copy import deepcopy
-from account import Account
 import yaml
 from pathlib import Path
 from termcolor import colored
 
+from mt5_connector.account import Account
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
 __license__ = "MIT"
