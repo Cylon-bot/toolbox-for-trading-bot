@@ -68,7 +68,7 @@ class Candle:
 
     @staticmethod
     def add_ema_info(
-            candle_info: pd.DataFrame, ema_list: Optional[List[int]]
+        candle_info: pd.DataFrame, ema_list: Optional[List[int]]
     ) -> Optional[dict[int, any]]:
         """
         add the info of the EMA to the candle
@@ -122,13 +122,9 @@ class Candle:
                 and self.open - self.low > minimum_rejection
             ):
                 return True, True
-            elif (
-                    self.high - self.close > minimum_rejection > self.open - self.low
-            ):
+            elif self.high - self.close > minimum_rejection > self.open - self.low:
                 return True, False
-            elif (
-                    self.high - self.close < minimum_rejection < self.open - self.low
-            ):
+            elif self.high - self.close < minimum_rejection < self.open - self.low:
                 return False, True
             else:
                 return False, False
@@ -138,13 +134,9 @@ class Candle:
                 and self.close - self.low > minimum_rejection
             ):
                 return True, True
-            elif (
-                    self.high - self.open > minimum_rejection > self.close - self.low
-            ):
+            elif self.high - self.open > minimum_rejection > self.close - self.low:
                 return True, False
-            elif (
-                    self.high - self.open < minimum_rejection < self.close - self.low
-            ):
+            elif self.high - self.open < minimum_rejection < self.close - self.low:
                 return False, True
             else:
                 return False, False

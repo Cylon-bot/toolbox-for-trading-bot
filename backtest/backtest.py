@@ -5,13 +5,19 @@ import yaml
 import os
 import pandas as pd
 from copy import deepcopy
+
+from pydantic import BaseModel
+
 from tools.market_data import load_data
 from tools.candle import Candle
 
 from pathlib import Path
 
 try:
-    from personal_bot import my_personal_bot_strategy as bot_strategy, manage_personal_bot as manage_bot
+    from personal_bot import (
+        my_personal_bot_strategy as bot_strategy,
+        manage_personal_bot as manage_bot,
+    )
 except ImportError:
     from bot_strat import bot_strategy, manage_bot
 
@@ -115,6 +121,7 @@ class Backtest:
         strat_auto_manage_trade: bool,
         **kwargs,
     ):
+        self.trade = None
         self.symbol = symbol_backtest
         self.backtest_name = backtest_name
         self.unique_id_backtest = unique_id_backtest
@@ -147,7 +154,9 @@ class Backtest:
         interval_time_frame = {}
         for time_frame in self.time_frames:
             data[time_frame] = data_candles[time_frame]
-            interval_time_frame[time_frame] = data[time_frame]["time"][1] - data[time_frame]["time"][0]
+            interval_time_frame[time_frame] = (
+                data[time_frame]["time"][1] - data[time_frame]["time"][0]
+            )
         max_iterator_backtest = len(data[1].index) - previous_backtest_candle_existing
         progress_bar = FillingCirclesBar("Processing", max=max_iterator_backtest + 1)
         data_step_to_process = {}
@@ -157,10 +166,15 @@ class Backtest:
             for rank, time_frame in enumerate(self.time_frames):
                 if rank == 0:
                     data_step_to_process[f"TF {time_frame}"] = data[time_frame].iloc[
-                        step_backtest: previous_backtest_candle_existing + step_backtest
+                        step_backtest: previous_backtest_candle_existing
+                        + step_backtest
                     ]
-                    begin_date_first_tf = data_step_to_process[f"TF {time_frame}"].iloc[0]["time"]
-                    end_date_first_tf = data_step_to_process[f"TF {time_frame}"].iloc[-1]["time"]
+                    begin_date_first_tf = data_step_to_process[f"TF {time_frame}"].iloc[
+                        0
+                    ]["time"]
+                    end_date_first_tf = data_step_to_process[f"TF {time_frame}"].iloc[
+                        -1
+                    ]["time"]
                 else:
                     find_begin_date = False
                     find_end_date = False
@@ -170,20 +184,33 @@ class Backtest:
                     for iterator, date in enumerate(data[time_frame]["time"]):
                         if iterator == 0:
                             previous_date = date
-                        if date > begin_date_first_tf - interval_time_frame[time_frame] and not find_begin_date:
+                        if (
+                            date > begin_date_first_tf - interval_time_frame[time_frame]
+                            and not find_begin_date
+                        ):
                             find_begin_date = True
-                            if (int(begin_date_first_tf.minute)+1) % int(int(interval_time_frame[time_frame].seconds)/60) == 0:
+                            if (int(begin_date_first_tf.minute) + 1) % int(
+                                int(interval_time_frame[time_frame].seconds) / 60
+                            ) == 0:
                                 begin_line_other_tf = date
                             else:
                                 begin_line_other_tf = previous_date
-                        if date > end_date_first_tf - interval_time_frame[time_frame] and not find_end_date:
+                        if (
+                            date > end_date_first_tf - interval_time_frame[time_frame]
+                            and not find_end_date
+                        ):
                             find_end_date = True
-                            if (int(end_date_first_tf.minute)+1) % int(int(interval_time_frame[time_frame].seconds)/60) == 0:
+                            if (int(end_date_first_tf.minute) + 1) % int(
+                                int(interval_time_frame[time_frame].seconds) / 60
+                            ) == 0:
                                 end_line_other_tf = date
                             else:
                                 end_line_other_tf = previous_date
                         previous_date = date
-                    data_step_to_process[f"TF {time_frame}"] = data[time_frame].loc[(data[time_frame]['time'] >= begin_line_other_tf) & (data[time_frame]['time'] <= end_line_other_tf)]
+                    data_step_to_process[f"TF {time_frame}"] = data[time_frame].loc[
+                        (data[time_frame]["time"] >= begin_line_other_tf)
+                        & (data[time_frame]["time"] <= end_line_other_tf)
+                    ]
 
             self.launch_strategy(data_step_to_process)
             progress_bar.next()
@@ -203,9 +230,9 @@ class Backtest:
         win_number = 0
         loose_number = 0
         for id_trade, trade in self.info_all_trade.items():
-            if trade["win"]:
+            if trade.win:
                 win_number += 1
-            elif not trade["win"]:
+            elif not trade.win:
                 loose_number += 1
         if number_trades == 0:
             win_ratio = "Nan"
@@ -260,56 +287,52 @@ class Backtest:
         ) as yaml_file:
             yaml.dump(all_trade_info, yaml_file)
 
-    def check_if_trade_is_on_going(self, trade, last_candle: Candle) -> Dict:
+    def check_if_trade_is_on_going(self, last_candle: Candle) -> None:
         """
         check if a trade pending is now on going
         """
-        order_type = trade["order_type"]
+        order_type = self.trade.order_type
         if (
             (
                 order_type == Mt5.ORDER_TYPE_BUY_LIMIT
                 or order_type == Mt5.ORDER_TYPE_SELL_STOP
             )
-            and trade["pending"]
-            and not trade["on_going"]
+            and self.trade.pending
+            and not self.trade.on_going
         ):
-            if last_candle.low <= trade["price"]:
-                trade["on_going"] = True
-                trade["pending"] = False
+            if last_candle.low <= self.trade.price:
+                self.trade.on_going = True
+                self.trade.pending = False
                 self.trade_on_going = True
         elif (
             (
                 order_type == Mt5.ORDER_TYPE_SELL_LIMIT
                 or order_type == Mt5.ORDER_TYPE_BUY_STOP
             )
-            and trade["pending"]
-            and not trade["on_going"]
+            and self.trade.pending
+            and not self.trade.on_going
         ):
-            if last_candle.high >= trade["price"]:
-                trade["on_going"] = True
-                trade["pending"] = False
+            if last_candle.high >= self.trade.price:
+                self.trade.on_going = True
+                self.trade.pending = False
                 self.trade_on_going = True
-        return trade
 
-    @staticmethod
-    def check_if_trade_need_closing(
-            trade: Dict, last_candle: Candle
-    ) -> (bool, str):
+    def check_if_trade_need_closing(self, last_candle: Candle) -> (bool, str):
         """
         check if a trade on going is now closed by SL, TP or BE
         """
         trade_closing = False
         result_trade = None
-        order_type = trade["order_type"]
+        order_type = self.trade.order_type
         if (
             order_type == Mt5.ORDER_TYPE_BUY
             or order_type == Mt5.ORDER_TYPE_BUY_LIMIT
             or order_type == Mt5.ORDER_TYPE_BUY_STOP
         ):
-            if last_candle.low < trade["sl"]:
+            if last_candle.low < self.trade.sl:
                 trade_closing = True
                 result_trade = "sl"
-            elif last_candle.high > trade["tp"]:
+            elif last_candle.high > self.trade.tp:
                 trade_closing = True
                 result_trade = "tp"
         elif (
@@ -317,16 +340,16 @@ class Backtest:
             or order_type == Mt5.ORDER_TYPE_SELL_LIMIT
             or order_type == Mt5.ORDER_TYPE_SELL_STOP
         ):
-            if last_candle.high > trade["sl"]:
+            if last_candle.high > self.trade.sl:
                 trade_closing = True
                 result_trade = "sl"
-            elif last_candle.low < trade["tp"]:
+            elif last_candle.low < self.trade.tp:
                 trade_closing = True
                 result_trade = "tp"
         return trade_closing, result_trade
 
     def manage_balance_after_trade_closing(
-        self, trade: Dict, result_trade: str, rr: Optional[float]
+        self, result_trade: str
     ):
         """
         change the balance depending if the trade is SL, TP or BE
@@ -334,14 +357,14 @@ class Backtest:
         new_balance = None
         if result_trade == "tp":
             new_balance = (
-                self.account.balance + self.account.balance * self.risk_percentage * rr
+                self.account.balance + self.account.balance * self.risk_percentage * self.trade.rr
             ) - (
                 self.account.balance
                 * self.risk_percentage
                 * 0.15  # 0.15 simulate the fee of the broker
             )
         elif result_trade == "sl":
-            if trade["sl_to_be"]:
+            if self.trade.sl_to_be:
                 new_balance = self.account.balance - (
                     self.account.balance
                     * self.risk_percentage
@@ -351,7 +374,7 @@ class Backtest:
                 new_balance = (
                     self.account.balance
                     - self.account.balance
-                    * (self.risk_percentage * trade["sl_ratio_modified"])
+                    * (self.risk_percentage * self.trade.sl_ratio_modified)
                     - (
                         self.account.balance
                         * self.risk_percentage
@@ -360,40 +383,38 @@ class Backtest:
                 )
         return new_balance
 
-    def check_if_trade_is_win(self, trade: Dict, new_balance: float) -> Dict:
+    def check_if_trade_is_win(self, new_balance: float) -> None:
         """
         check if the trade is win or loose
         """
         if new_balance > self.account.balance:
-            trade["win"] = True
+            self.trade.win = True
         else:
-            trade["win"] = False
-        return trade
+            self.trade.win = False
 
-    @staticmethod
-    def check_if_trade_sl_to_be(trade: Dict, last_candle: Candle) -> None:
+    def check_if_trade_sl_to_be(self, last_candle: Candle) -> None:
         """
         check if the trade SL need to be put at BE
         """
-        if trade["be"] is None:
+        if self.trade.be is None:
             return None
-        order_type = trade["order_type"]
+        order_type = self.trade.order_type
         if (
             order_type == Mt5.ORDER_TYPE_BUY
             or order_type == Mt5.ORDER_TYPE_BUY_LIMIT
             or order_type == Mt5.ORDER_TYPE_BUY_STOP
         ):
-            if last_candle.close >= trade["be"]:
-                trade["sl_to_be"] = True
-                trade["sl"] = trade["price"]
+            if last_candle.close >= self.trade.be:
+                self.trade.sl_to_be = True
+                self.trade.sl = self.trade.price
         elif (
             order_type == Mt5.ORDER_TYPE_SELL
             or order_type == Mt5.ORDER_TYPE_SELL_LIMIT
             or order_type == Mt5.ORDER_TYPE_SELL_STOP
         ):
-            if last_candle.close <= trade["be"]:
-                trade["sl_to_be"] = True
-                trade["sl"] = trade["price"]
+            if last_candle.close <= self.trade.be:
+                self.trade.sl_to_be = True
+                self.trade.sl = self.trade.price
 
     def manage_drawdown(self):
         """
@@ -418,31 +439,25 @@ class Backtest:
         manage on going trade --> SL, TP or BE
         """
         for trade_id, trade in self.info_all_trade.items():
-            if not trade["on_going"] and not trade["pending"]:
+            self.trade = trade
+            if not self.trade.on_going and not self.trade.pending:
                 continue
-            if trade["pending"]:
-                trade = self.check_if_trade_is_on_going(trade, last_candle)
-            if not trade["on_going"]:
+            if self.trade.pending:
+                self.check_if_trade_is_on_going(last_candle)
+            if not self.trade.on_going:
                 continue
             if self.strat_auto_manage_trade:
-                trade, trade_closing, result_trade = manage_bot(
-                        trade, **self.kwargs
-                    )
+                self.trade, trade_closing, result_trade = manage_bot(self.trade, **self.kwargs)
             else:
-                trade_closing, result_trade = self.check_if_trade_need_closing(
-                    trade, last_candle
-                )
-            rr = trade["RR"]
+                trade_closing, result_trade = self.check_if_trade_need_closing(last_candle)
             if trade_closing:
-                new_balance = self.manage_balance_after_trade_closing(
-                    trade, result_trade, rr
-                )
-                trade = self.check_if_trade_is_win(trade, new_balance)
+                new_balance = self.manage_balance_after_trade_closing(result_trade)
+                self.check_if_trade_is_win(new_balance)
                 self.account.balance = new_balance
-                trade["on_going"] = False
+                self.trade.on_going = False
                 self.trade_on_going = False
             elif not self.strat_auto_manage_trade:
-                self.check_if_trade_sl_to_be(trade, last_candle)
+                self.check_if_trade_sl_to_be(last_candle)
             self.manage_drawdown()
 
     def launch_strategy(self, data_step_to_process: dict[str, pd.DataFrame]):
@@ -458,15 +473,17 @@ class Backtest:
         else:
             trade = None
         if trade is not None:
-            if trade["on_going"]:
+            if trade.on_going:
                 self.trade_on_going = True
             if self.delete_previous_pending_trade:
                 self.info_all_trade = dict(
                     (key, value)
                     for (key, value) in self.info_all_trade.items()
-                    if not value["pending"]
+                    if not value.pending
                 )
             info_trade_deep_copy = deepcopy(trade)
             self.info_all_trade[
-                str(last_candle.date) + str(trade["order_type"])
+                str(last_candle.date) + str(trade.order_type)
             ] = info_trade_deep_copy
+
+

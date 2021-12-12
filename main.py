@@ -5,7 +5,9 @@ from bot_strat import live_trading
 from typing import List
 
 try:
-    from backtest.my_personal_backtest import create_personal_backtest as create_backtest
+    from backtest.my_personal_backtest import (
+        create_personal_backtest as create_backtest,
+    )
 except ImportError:
     from backtest.backtest import create_backtest
 

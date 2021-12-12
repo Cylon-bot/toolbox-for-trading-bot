@@ -10,6 +10,7 @@ from tools.tools_trade import (
     get_order_history,
     positions_get,
 )
+
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
 __license__ = "MIT"

@@ -19,6 +19,7 @@ from pathlib import Path
 
 try:
     from personal_bot import live_trading_personnal_strat as bot_strategy
+
     PERSONAL_BOT = True
 except ImportError:
     PERSONAL_BOT = False
@@ -32,14 +33,14 @@ __status__ = "Production"
 
 
 def bot_strategy(
-        my_account: Optional[Account] = None,
-        symbol: str = "EURUSD",
-        account_currency: str = "USD",
-        risk: float = 0.5,
-        tf_list: list[int] = [Mt5.TIMEFRAME_M1],
-        backtest_data: Optional[dict[str, pd.DataFrame]] = None,
-        ema_list: Optional[List[int]] = [25, 50],
-        bollinger_band: bool = False,
+    my_account: Optional[Account] = None,
+    symbol: str = "EURUSD",
+    account_currency: str = "USD",
+    risk: float = 0.5,
+    tf_list: list[int] = [Mt5.TIMEFRAME_M1],
+    backtest_data: Optional[dict[str, pd.DataFrame]] = None,
+    ema_list: Optional[List[int]] = [25, 50],
+    bollinger_band: bool = False,
 ) -> Optional[dict[str, Union[bool, str, float, int]]]:
     """
     put your strat here
@@ -135,17 +136,17 @@ def bot_strategy(
 
 
 def take_trade(
-        my_account: Account,
-        pair: str,
-        account_currency: str,
-        order_type: int,
-        risk: float,
-        price: Optional[float],
-        tp: Optional[float],
-        sl: Optional[float],
-        size: Optional[float],
-        comment: str,
-        lot_all_pair: Dict[str, pd.DataFrame]
+    my_account: Account,
+    pair: str,
+    account_currency: str,
+    order_type: int,
+    risk: float,
+    price: Optional[float],
+    tp: Optional[float],
+    sl: Optional[float],
+    size: Optional[float],
+    comment: str,
+    lot_all_pair: Dict[str, pd.DataFrame],
 ):
     """
     create a new trade and open it
@@ -208,7 +209,9 @@ def live_trading(account_currency: str, risk: float, symbols: List[str]):
         my_account.connect(credential="demo_account_test.yaml")
         for symbol in symbols:
             (
-                schedule.every(1).minutes.at(":01").do(
+                schedule.every(1)
+                .minutes.at(":01")
+                .do(
                     bot_strategy,
                     my_account,
                     symbol,
