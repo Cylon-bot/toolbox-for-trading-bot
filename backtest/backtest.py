@@ -119,6 +119,7 @@ class Backtest:
         more_than_on_trade_on_going: bool,
         delete_previous_pending_trade: bool,
         strat_auto_manage_trade: bool,
+        candle_existing: int = 100,
         **kwargs,
     ):
         self.trade = None
@@ -139,6 +140,7 @@ class Backtest:
         self.trade_on_going = False
         self.kwargs = kwargs
         self.strat_auto_manage_trade = strat_auto_manage_trade
+        self.candle_existing = candle_existing
 
     def launch_backtest(self, path_data: Union[Path, str]) -> (float, float):
         """
@@ -149,7 +151,7 @@ class Backtest:
         data_candles = dict()
         for tf, data_candles_pairs in data_candles_all_tf.items():
             data_candles[tf] = data_candles_pairs[self.symbol]
-        previous_backtest_candle_existing = 1500
+        previous_backtest_candle_existing = self.candle_existing
         data = {}
         interval_time_frame = {}
         for time_frame in self.time_frames:
@@ -157,7 +159,7 @@ class Backtest:
             interval_time_frame[time_frame] = (
                 data[time_frame]["time"][1] - data[time_frame]["time"][0]
             )
-        max_iterator_backtest = len(data[1].index) - previous_backtest_candle_existing
+        max_iterator_backtest = len(data[self.time_frames[0]].index) - previous_backtest_candle_existing
         progress_bar = FillingCirclesBar("Processing", max=max_iterator_backtest + 1)
         data_step_to_process = {}
         begin_date_first_tf = None
