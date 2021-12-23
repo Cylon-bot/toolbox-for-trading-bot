@@ -12,7 +12,7 @@ from tools.candle import Candle
 from mt5_connector.trade import Trade
 
 try:
-    from strat.smart_money import live_trading_smart_money as bot_strategy
+    from strat.my_bot_strat import live_trading_smart_money as bot_strategy
     PERSONAL_BOT = True
 except ImportError:
     PERSONAL_BOT = False

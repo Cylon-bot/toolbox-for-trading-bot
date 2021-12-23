@@ -14,9 +14,9 @@ from tools.candle import Candle
 from pathlib import Path
 
 try:
-    from strat.smart_money import (
-        smart_money_strat as bot_strategy,
-        manage_smart_money as manage_bot,
+    from strat.my_bot_strat import (
+        bot_strat as bot_strategy,
+        manage_bot_strat as manage_bot,
     )
 except ImportError:
     from strat.bot_strat import bot_strategy, manage_bot

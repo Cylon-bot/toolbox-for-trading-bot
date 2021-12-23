@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union, Dict
 
 import pandas as pd
 
@@ -18,7 +18,7 @@ class Candle:
 
     def __init__(
         self,
-        candle_info: pd.DataFrame,
+        candle_info: Union[Dict, pd.DataFrame],
         bollinger_band: bool = False,
         rsi: bool = False,
         minimum_rejection: Optional[float] = None,
@@ -167,3 +167,20 @@ class Candle:
         if print_message:
             print(message)
         return message
+
+
+def rebuild_candle(candles_workers: pd.DataFrame):
+    built_candle_dict = {"close": candles_workers["close"].iloc[-1]}
+    for number_candle, candle in enumerate(candles_workers.iloc()):
+        if number_candle == 0:
+            built_candle_dict["high"] = candle["high"]
+            built_candle_dict["low"] = candle["low"]
+            built_candle_dict["open"] = candle["open"]
+            built_candle_dict["time"] = candle["time"]
+        else:
+            if candle["high"] > built_candle_dict["high"]:
+                built_candle_dict["high"] = candle["high"]
+            if candle["low"] < built_candle_dict["low"]:
+                built_candle_dict["low"] = candle["low"]
+    built_candle = Candle(built_candle_dict)
+    return built_candle
