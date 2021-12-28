@@ -3,7 +3,10 @@ from copy import deepcopy
 
 import pytz
 from datetime import datetime, timedelta
-import MetaTrader5 as Mt5
+try:
+    import MetaTrader5 as Mt5
+except:
+    pass
 import pandas as pd
 import yaml
 from pathlib import Path

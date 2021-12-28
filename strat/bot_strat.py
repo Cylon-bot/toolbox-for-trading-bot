@@ -1,10 +1,10 @@
 from typing import List, Optional, Union, Dict
 import time
 
-import MetaTrader5 as Mt5
 import pandas as pd
 import schedule
 
+from const import TIMEFRAME_M1, ORDER_TYPE_BUY, ORDER_TYPE_SELL
 from tools.market_data import return_datas
 from tools.tools_trade import (positions_get, recup_all_symbol_conversion)
 from mt5_connector.account import Account
@@ -30,7 +30,7 @@ def bot_strategy(
     symbol: str = "EURUSD",
     account_currency: str = "USD",
     risk: float = 0.5,
-    tf_list: list[int] = [Mt5.TIMEFRAME_M1],
+    tf_list: list[int] = [TIMEFRAME_M1],
     backtest_data: Optional[dict[str, pd.DataFrame]] = None,
     ema_list: Optional[List[int]] = [25, 50],
     bollinger_band: bool = False,
@@ -48,7 +48,7 @@ def bot_strategy(
     if backtest_data is None:
         symbol_broker_yaml = recup_all_symbol_conversion()
         account_currency_conversion = return_datas(
-            symbol_broker_yaml["calcul_for_lot"], [Mt5.TIMEFRAME_M1], True
+            symbol_broker_yaml["calcul_for_lot"], [TIMEFRAME_M1], True
         )
         data_tf_1 = data[tf_list[0]][symbol]
     else:
@@ -79,11 +79,11 @@ def bot_strategy(
     if last_candle_first_tf.close > last_candle_first_tf.EMAs[ema_list[0]]:
         sl = last_candle_first_tf.close - 3 * pips
         tp = last_candle_first_tf.close + 6 * pips
-        order_type = Mt5.ORDER_TYPE_BUY
+        order_type = ORDER_TYPE_BUY
     elif last_candle_first_tf.close < last_candle_first_tf.EMAs[ema_list[0]]:
         sl = last_candle_first_tf.close + 3 * pips
         tp = last_candle_first_tf.close - 6 * pips
-        order_type = Mt5.ORDER_TYPE_SELL
+        order_type = ORDER_TYPE_SELL
     else:
         return None
     comment = "my_bot_trade"

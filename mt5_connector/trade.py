@@ -1,6 +1,9 @@
 from typing import Optional
 
-import MetaTrader5 as Mt5
+try:
+    import MetaTrader5 as Mt5
+except:
+    pass
 from pandas import DataFrame
 from termcolor import colored
 
@@ -193,7 +196,7 @@ class Trade:
         return volume
 
     @staticmethod
-    def check_symbol(symbol_info: Mt5.SymbolInfo, symbol: str):
+    def check_symbol(symbol_info, symbol: str):
         """
         check if the symbol given by the user exist in the broker trading list
         """

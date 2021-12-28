@@ -1,18 +1,16 @@
-import MetaTrader5 as Mt5
-from typing import Dict, Optional, Union, List
+from pathlib import Path
+from copy import deepcopy
+from typing import Dict, Union, List
+import os
+
 from progress.bar import FillingCirclesBar
 import yaml
-import os
 import pandas as pd
-from copy import deepcopy
 
-from pydantic import BaseModel
-
+from const import TIMEFRAME_M1, ORDER_TYPE_BUY_LIMIT, ORDER_TYPE_BUY, ORDER_TYPE_BUY_STOP, ORDER_TYPE_SELL, \
+    ORDER_TYPE_SELL_LIMIT, ORDER_TYPE_SELL_STOP
 from tools.market_data import load_data
 from tools.candle import Candle
-
-from pathlib import Path
-
 try:
     from strat.my_bot_strat import (
         bot_strat as bot_strategy,
@@ -43,7 +41,7 @@ def create_backtest():
     risk = 0.5
     name_file_data = "January_2021.txt"
     initial_account_balance = 100_000
-    time_frame = Mt5.TIMEFRAME_M1
+    time_frames = [TIMEFRAME_M1]
     more_than_on_trade_on_going = False
     unique_id_backtest = "January_2021"
     delete_previous_pending_trade = False
@@ -59,7 +57,7 @@ def create_backtest():
     kwargs = {
         "symbol": "EURUSD",
         "risk": risk,
-        "tf_list": [time_frame],
+        "tf_list": time_frames,
         "ema_list": [25, 50],
     }
 
@@ -72,7 +70,7 @@ def create_backtest():
         unique_id_backtest,
         risk,
         initial_account_balance,
-        time_frame,
+        time_frames,
         more_than_on_trade_on_going,
         delete_previous_pending_trade,
         strat_auto_manage_trade,
@@ -299,8 +297,8 @@ class Backtest:
         order_type = self.trade.order_type
         if (
             (
-                order_type == Mt5.ORDER_TYPE_BUY_LIMIT
-                or order_type == Mt5.ORDER_TYPE_SELL_STOP
+                order_type == ORDER_TYPE_BUY_LIMIT
+                or order_type == ORDER_TYPE_SELL_STOP
             )
             and self.trade.pending
             and not self.trade.on_going
@@ -311,8 +309,8 @@ class Backtest:
                 self.trade_on_going = True
         elif (
             (
-                order_type == Mt5.ORDER_TYPE_SELL_LIMIT
-                or order_type == Mt5.ORDER_TYPE_BUY_STOP
+                order_type == ORDER_TYPE_SELL_LIMIT
+                or order_type == ORDER_TYPE_BUY_STOP
             )
             and self.trade.pending
             and not self.trade.on_going
@@ -330,9 +328,9 @@ class Backtest:
         result_trade = None
         order_type = self.trade.order_type
         if (
-            order_type == Mt5.ORDER_TYPE_BUY
-            or order_type == Mt5.ORDER_TYPE_BUY_LIMIT
-            or order_type == Mt5.ORDER_TYPE_BUY_STOP
+            order_type == ORDER_TYPE_BUY
+            or order_type == ORDER_TYPE_BUY_LIMIT
+            or order_type == ORDER_TYPE_BUY_STOP
         ):
             if last_candle.low < self.trade.sl:
                 trade_closing = True
@@ -341,9 +339,9 @@ class Backtest:
                 trade_closing = True
                 result_trade = "tp"
         elif (
-            order_type == Mt5.ORDER_TYPE_SELL
-            or order_type == Mt5.ORDER_TYPE_SELL_LIMIT
-            or order_type == Mt5.ORDER_TYPE_SELL_STOP
+            order_type == ORDER_TYPE_SELL
+            or order_type == ORDER_TYPE_SELL_LIMIT
+            or order_type == ORDER_TYPE_SELL_STOP
         ):
             if last_candle.high > self.trade.sl:
                 trade_closing = True
@@ -405,17 +403,17 @@ class Backtest:
             return None
         order_type = self.trade.order_type
         if (
-            order_type == Mt5.ORDER_TYPE_BUY
-            or order_type == Mt5.ORDER_TYPE_BUY_LIMIT
-            or order_type == Mt5.ORDER_TYPE_BUY_STOP
+            order_type == ORDER_TYPE_BUY
+            or order_type == ORDER_TYPE_BUY_LIMIT
+            or order_type == ORDER_TYPE_BUY_STOP
         ):
             if last_candle.close >= self.trade.be:
                 self.trade.sl_to_be = True
                 self.trade.sl = self.trade.price
         elif (
-            order_type == Mt5.ORDER_TYPE_SELL
-            or order_type == Mt5.ORDER_TYPE_SELL_LIMIT
-            or order_type == Mt5.ORDER_TYPE_SELL_STOP
+            order_type == ORDER_TYPE_SELL
+            or order_type == ORDER_TYPE_SELL_LIMIT
+            or order_type == ORDER_TYPE_SELL_STOP
         ):
             if last_candle.close <= self.trade.be:
                 self.trade.sl_to_be = True

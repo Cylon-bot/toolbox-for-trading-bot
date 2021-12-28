@@ -1,7 +1,9 @@
 from typing import List, Dict, Optional, Union
 from datetime import datetime, timedelta
-
-import MetaTrader5 as Mt5
+try:
+    import MetaTrader5 as Mt5
+except:
+    pass
 import pandas as pd
 from pathlib import Path
 import pickle as pck
@@ -14,6 +16,8 @@ __license__ = "MIT"
 __maintainer__ = "Thibault Delrieu"
 __email__ = "thibault.delrieu.pro@gmail.com"
 __status__ = "Production"
+
+from const import TIMEFRAME_M1
 
 
 def get_data(
@@ -63,7 +67,7 @@ def get_data(
     return pair_data
 
 
-def get_time_frame_needed(tf: int = Mt5.TIMEFRAME_M1) -> Dict[int, datetime]:
+def get_time_frame_needed(tf: int = TIMEFRAME_M1) -> Dict[int, datetime]:
     """
     return three day of candles in a specified TF
     """

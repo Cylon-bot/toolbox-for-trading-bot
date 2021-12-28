@@ -1,5 +1,8 @@
 from pathlib import Path
-import MetaTrader5 as Mt5
+try:
+    import MetaTrader5 as Mt5
+except:
+    pass
 import yaml
 
 __author__ = "Thibault Delrieu"
