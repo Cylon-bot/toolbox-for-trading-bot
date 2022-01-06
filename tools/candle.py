@@ -2,7 +2,6 @@ from typing import List, Optional, Union, Dict
 
 import pandas as pd
 
-
 __author__ = "Thibault Delrieu"
 __copyright__ = "Copyright 2021, Thibault Delrieu"
 __license__ = "MIT"
@@ -17,14 +16,14 @@ class Candle:
     """
 
     def __init__(
-        self,
-        candle_info: Union[Dict, pd.DataFrame],
-        bollinger_band: bool = False,
-        rsi: bool = False,
-        minimum_rejection: Optional[float] = None,
-        ema_list: Optional[List[int]] = None,
-        body_min: Optional[float] = None,
-        id_candle: Optional[int] = None,
+            self,
+            candle_info: Union[Dict, pd.DataFrame],
+            bollinger_band: bool = False,
+            rsi: bool = False,
+            minimum_rejection: Optional[float] = None,
+            ema_list: Optional[List[int]] = None,
+            body_min: Optional[float] = None,
+            id_candle: Optional[int] = None,
     ):
 
         self.ID = id_candle
@@ -70,7 +69,7 @@ class Candle:
 
     @staticmethod
     def add_ema_info(
-        candle_info: pd.DataFrame, ema_list: Optional[List[int]]
+            candle_info: pd.DataFrame, ema_list: Optional[List[int]]
     ) -> Optional[dict[int, any]]:
         """
         add the info of the EMA to the candle
@@ -104,9 +103,9 @@ class Candle:
         check if the candle is a doji, need a body min parameter
         """
         if (
-            self.high_rejection == "Unknown"
-            or self.low_rejection == "Unknown"
-            or self.body == "Unknown"
+                self.high_rejection == "Unknown"
+                or self.low_rejection == "Unknown"
+                or self.body == "Unknown"
         ):
             return None
         if (self.high_rejection or self.low_rejection) and abs(self.body) <= body_min:
@@ -120,8 +119,8 @@ class Candle:
         """
         if self.bullish:
             if (
-                self.high - self.close > minimum_rejection
-                and self.open - self.low > minimum_rejection
+                    self.high - self.close > minimum_rejection
+                    and self.open - self.low > minimum_rejection
             ):
                 return True, True
             elif self.high - self.close > minimum_rejection > self.open - self.low:
@@ -132,8 +131,8 @@ class Candle:
                 return False, False
         if not self.bullish:
             if (
-                self.high - self.open > minimum_rejection
-                and self.close - self.low > minimum_rejection
+                    self.high - self.open > minimum_rejection
+                    and self.close - self.low > minimum_rejection
             ):
                 return True, True
             elif self.high - self.open > minimum_rejection > self.close - self.low:
@@ -155,14 +154,14 @@ class Candle:
             f"Close: {self.close}\n"
             f"High: {self.high}\n"
             f"Low: {self.low}\n"
-            f"body: {round(self.body*pips_inverse,2)} Pips\n"
+            f"body: {round(self.body * pips_inverse, 2)} Pips\n"
             f"doji: {self.doji}\n"
             f"EMA: {self.EMAs}\n"
             f"Bullish: {self.bullish}\n"
             f"Engulfing: {self.engulfing}\n"
             f"High_rejection: {self.high_rejection}\n"
             f"Low_rejection: {self.low_rejection}\n"
-            f'{"."*50}'
+            f'{"." * 50}'
         )
         if print_message:
             print(message)
