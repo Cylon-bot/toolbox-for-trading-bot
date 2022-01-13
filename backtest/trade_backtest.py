@@ -8,7 +8,7 @@ class TradeBacktest(BaseModel):
     date_entry: str
     price: float
     rr: float
-    be: float
+    be: Optional[float]
     sl: float
     tp: float
     pending: bool
