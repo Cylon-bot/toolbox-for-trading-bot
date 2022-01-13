@@ -12,3 +12,5 @@ pickle-mixin
 ta-lib
 termcolor
 progress
+pydantic
+more-itertools
